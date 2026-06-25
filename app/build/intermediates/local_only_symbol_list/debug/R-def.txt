@@ -1,0 +1,31 @@
+R_DEF: Internal format may change without notice
+local
+color accent
+color black
+color overlay_background
+color platinum
+color primary
+color primaryDark
+color white
+drawable circle_background
+drawable ic_launcher
+id btn_permission
+id btn_toggle
+id btn_toggle_overlay
+id overlay_root
+id results_container
+id scroll_results
+id toggle_row
+id tv_last_scan
+id tv_toggle_label
+layout activity_main
+layout overlay_layout
+string app_name
+string grant_permission
+string overlay_permission_message
+string overlay_permission_required
+string overlay_running
+string searching
+string start_overlay
+string stop_overlay
+style Theme.WarframePriceOverlay

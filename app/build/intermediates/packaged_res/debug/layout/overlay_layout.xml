@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="start">
+
+    <!-- Toggle lever row -->
+    <LinearLayout
+        android:id="@+id/toggle_row"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#CC0A0A1A"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp"
+        android:elevation="10dp">
+
+        <!-- Lever/power icon -->
+        <ImageView
+            android:id="@+id/btn_toggle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_media_play"
+            android:background="@drawable/circle_background"
+            android:padding="10dp"
+            android:elevation="8dp" />
+
+        <!-- Status text: SCANNING / OFF -->
+        <TextView
+            android:id="@+id/tv_toggle_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="OFF"
+            android:textColor="#FF888888"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace" />
+
+        <!-- Last scan timestamp -->
+        <TextView
+            android:id="@+id/tv_last_scan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text=""
+            android:textColor="#FF555566"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Results panel — always visible when scanning is ON -->
+    <ScrollView
+        android:id="@+id/scroll_results"
+        android:layout_width="230dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:maxHeight="350dp"
+        android:visibility="gone"
+        android:elevation="8dp">
+
+        <LinearLayout
+            android:id="@+id/results_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#DD0A0A1A"
+            android:padding="8dp" />
+
+    </ScrollView>
+
+</LinearLayout>

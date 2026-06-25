@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.4\\com.warframe.priceoverlay.app-mergeDebugResources-3:\\layout\\activity_main.xml",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.4\\com.warframe.priceoverlay.app-main-6:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.4\\com.warframe.priceoverlay.app-mergeDebugResources-3:\\layout\\overlay_layout.xml",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.4\\com.warframe.priceoverlay.app-main-6:\\layout\\overlay_layout.xml"
+    },
+    {
+        "merged": "com.warframe.priceoverlay.app-mergeDebugResources-3:/layout/overlay_layout.xml",
+        "source": "com.warframe.priceoverlay.app-main-6:/layout/overlay_layout.xml"
+    }
+]
