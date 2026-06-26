@@ -4,7 +4,7 @@
             "outputFile": "com.warframe.priceoverlay.app-mergeDebugResources-2:/values-small-v4/values-small-v4.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-3\\b3c26563262647bf3dcf127733e5ba7c\\transformed\\material-1.11.0\\res\\values-small-v4\\values-small-v4.xml",
+                    "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.14.5\\transforms\\cb83200172c07c9e34e425e5f6245ce6\\transformed\\material-1.11.0\\res\\values-small-v4\\values-small-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",

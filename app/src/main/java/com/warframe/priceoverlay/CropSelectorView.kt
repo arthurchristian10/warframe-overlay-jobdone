@@ -76,7 +76,7 @@ class CropSelectorView(
         canvas.drawCircle(rect.right.toFloat(), rect.bottom.toFloat(), handleRadius, handlePaint)
         // Info label
         val label = "${rect.width()}×${rect.height()} px"
-        canvas.drawText(label, rect.left.toFloat(), (rect.top - 16).coerceAtLeast(40f), labelPaint)
+        canvas.drawText(label, rect.left.toFloat(), (rect.top - 16).toFloat().coerceAtLeast(40f), labelPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

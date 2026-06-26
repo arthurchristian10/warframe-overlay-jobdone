@@ -4,7 +4,7 @@
             "outputFile": "com.warframe.priceoverlay.app-mergeDebugResources-2:/values-en-rAU/values-en-rAU.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-3\\b4e4f691e4e9f09b2d7e8876bd9a90e3\\transformed\\core-1.12.0\\res\\values-en-rAU\\values-en-rAU.xml",
+                    "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.14.5\\transforms\\a1b7955f5c54f58655d6b4216e4492bc\\transformed\\core-1.12.0\\res\\values-en-rAU\\values-en-rAU.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -21,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\caches\\transforms-3\\23173c1e8b69541bdabe178a712a22d2\\transformed\\appcompat-1.6.1\\res\\values-en-rAU\\values-en-rAU.xml",
+                    "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\caches\\8.14.5\\transforms\\cf9b2a2660bcc143b419f63c78490854\\transformed\\appcompat-1.6.1\\res\\values-en-rAU\\values-en-rAU.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
