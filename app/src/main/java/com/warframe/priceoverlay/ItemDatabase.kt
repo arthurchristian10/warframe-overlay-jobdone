@@ -54,36 +54,68 @@ class ItemDatabase(private val context: Context) {
 
         if (queryWords.isEmpty()) return null
 
-        // 1. Exact match — always wins, handles single-word mods too
+        // 1. Exact full string match
         index.find { it.nameLower == normalizedQuery }?.let {
             Log.d("ItemDatabase", "Exact: '$query' → '${it.entry.name}'")
             return it.entry
         }
 
-        // 2. Single-word queries: exact match only.
-        //    No fuzzy matching — avoids false positives on short OCR fragments.
+        // 2. Single-word queries: exact only — too ambiguous for fuzzy
         if (queryWords.size == 1) return null
 
-        // 3. Bidirectional whole-word match:
-        //    ALL query words must exactly equal an item word,
-        //    AND ALL item words must exactly equal a query word.
-        //    Prevents "Saryn Set" matching "Saryn Blueprint" (set ≠ blueprint),
-        //    and prevents "Mutalist V Coordinates" matching "Nav Coordinates"
-        //    (mutalist, v not in query).
-        val candidates = index.filter { item ->
+        // 3. Exact bidirectional word match
+        val exactCandidates = index.filter { item ->
             queryWords.all { qw -> item.nameWords.any { iw -> iw == qw } } &&
             item.nameWords.all { iw -> queryWords.any { qw -> qw == iw } }
         }
-
-        if (candidates.isEmpty()) return null
-        if (candidates.size == 1) {
-            Log.d("ItemDatabase", "Match: '$query' → '${candidates[0].entry.name}'")
-            return candidates[0].entry
+        if (exactCandidates.size == 1) {
+            Log.d("ItemDatabase", "Match: '$query' → '${exactCandidates[0].entry.name}'")
+            return exactCandidates[0].entry
+        }
+        if (exactCandidates.size > 1) {
+            val best = exactCandidates.minByOrNull { it.nameWords.size }
+            Log.d("ItemDatabase", "Ambiguous exact (${exactCandidates.size}): '$query' → '${best?.entry?.name}'")
+            return best?.entry
         }
 
-        // 4. Multiple matches — pick fewest words (most specific)
-        val best = candidates.minByOrNull { it.nameWords.size }
-        Log.d("ItemDatabase", "Ambiguous (${candidates.size}): '$query' → '${best?.entry?.name}'")
-        return best?.entry
+        // 3.5. Fuzzy bidirectional match — Levenshtein ≤ 1 per word
+        // Catches OCR corruption: "Neuropücs"→"Neuroptics", "Saryrn"→"Saryn"
+        // Words must match positionally (zip) to prevent cross-word fuzzy bleed
+        // Short words (≤ 3 chars) must match exactly — too ambiguous to fuzz
+        val fuzzyCandidates = index.filter { item ->
+            item.nameWords.size == queryWords.size &&
+            queryWords.zip(item.nameWords).all { (qw, iw) ->
+                iw == qw || (qw.length > 3 && iw.length > 3 && levenshtein(qw, iw) <= 1)
+            }
+        }
+        if (fuzzyCandidates.size == 1) {
+            Log.d("ItemDatabase", "Fuzzy: '$query' → '${fuzzyCandidates[0].entry.name}'")
+            return fuzzyCandidates[0].entry
+        }
+        if (fuzzyCandidates.size > 1) {
+            val best = fuzzyCandidates.minByOrNull { item ->
+                queryWords.zip(item.nameWords).sumOf { (qw, iw) -> levenshtein(qw, iw) }
+            }
+            Log.d("ItemDatabase", "Fuzzy ambiguous (${fuzzyCandidates.size}): '$query' → '${best?.entry?.name}'")
+            return best?.entry
+        }
+
+        Log.d("ItemDatabase", "No match: '$query'")
+        return null
+    }
+
+    // Standard iterative Levenshtein — O(m×n), safe for short word-length strings
+    private fun levenshtein(a: String, b: String): Int {
+        if (a == b) return 0
+        if (a.isEmpty()) return b.length
+        if (b.isEmpty()) return a.length
+        val dp = Array(a.length + 1) { IntArray(b.length + 1) }
+        for (i in 0..a.length) dp[i][0] = i
+        for (j in 0..b.length) dp[0][j] = j
+        for (i in 1..a.length) for (j in 1..b.length) {
+            dp[i][j] = if (a[i-1] == b[j-1]) dp[i-1][j-1]
+                       else 1 + minOf(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
+        }
+        return dp[a.length][b.length]
     }
 }

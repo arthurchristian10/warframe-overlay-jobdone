@@ -1361,7 +1361,6 @@ color background_floating_material_dark
 color background_floating_material_light
 color background_material_dark
 color background_material_light
-color black
 color bright_foreground_disabled_material_dark
 color bright_foreground_disabled_material_light
 color bright_foreground_inverse_material_dark
@@ -2088,8 +2087,6 @@ color mtrl_textinput_focused_box_stroke_color
 color mtrl_textinput_hovered_box_stroke_color
 color notification_action_color_filter
 color notification_icon_bg_color
-color overlay_background
-color platinum
 color primary
 color primaryDark
 color primary_dark_material_dark
@@ -2114,7 +2111,6 @@ color switch_thumb_normal_material_dark
 color switch_thumb_normal_material_light
 color tooltip_background_dark
 color tooltip_background_light
-color white
 dimen abc_action_bar_content_inset_material
 dimen abc_action_bar_content_inset_with_nav
 dimen abc_action_bar_default_height_material
@@ -3001,6 +2997,7 @@ drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
 drawable circle_background
+drawable circle_background_blue
 drawable common_full_open_on_phone
 drawable common_google_signin_btn_icon_dark
 drawable common_google_signin_btn_icon_dark_focused
@@ -3221,6 +3218,7 @@ id bounce
 id bounceBoth
 id bounceEnd
 id bounceStart
+id btn_lookup
 id btn_permission
 id btn_toggle
 id btn_toggle_overlay
@@ -3284,6 +3282,7 @@ id disableIntraAutoTransition
 id disablePostScroll
 id disableScroll
 id disjoint
+id divider
 id dragAnticlockwise
 id dragClockwise
 id dragDown
@@ -3480,6 +3479,15 @@ id pathRelative
 id peekHeight
 id percent
 id pin
+id popup_ducat_label
+id popup_ducat_value
+id popup_item_name
+id popup_plat_label
+id popup_plat_price
+id popup_ratio
+id popup_ratio_label
+id popup_root
+id popup_status
 id position
 id postLayout
 id pressed
@@ -3607,6 +3615,8 @@ id transition_scene_layoutid_cache
 id transition_transform
 id triangle
 id tv_last_scan
+id tv_lookup_label
+id tv_median_label
 id tv_toggle_label
 id unchecked
 id uniform
@@ -3766,6 +3776,7 @@ layout design_text_input_end_icon
 layout design_text_input_start_icon
 layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
+layout item_popup_layout
 layout m3_alert_dialog
 layout m3_alert_dialog_actions
 layout m3_alert_dialog_title
@@ -4566,6 +4577,7 @@ style Theme_AppCompat_Light_Dialog_MinWidth
 style Theme_AppCompat_Light_DialogWhenLarge
 style Theme_AppCompat_Light_NoActionBar
 style Theme_AppCompat_NoActionBar
+style Theme_ArtFrame
 style Theme_Design
 style Theme_Design_BottomSheetDialog
 style Theme_Design_Light
@@ -4646,7 +4658,6 @@ style Theme_MaterialComponents_Light_NoActionBar
 style Theme_MaterialComponents_Light_NoActionBar_Bridge
 style Theme_MaterialComponents_NoActionBar
 style Theme_MaterialComponents_NoActionBar_Bridge
-style Theme_WarframePriceOverlay
 style ThemeOverlay_AppCompat
 style ThemeOverlay_AppCompat_ActionBar
 style ThemeOverlay_AppCompat_Dark

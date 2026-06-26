@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="primary">#FF6200EE</color>
-    <color name="primaryDark">#FF3700B3</color>
-    <color name="accent">#FF03DAC5</color>
-    <color name="overlay_background">#80000000</color>
-    <color name="platinum">#E5E4E2</color>
+    <color name="primary">#1A1A2E</color>
+    <color name="primaryDark">#0F0F1E</color>
+    <color name="accent">#00E676</color>
 </resources>

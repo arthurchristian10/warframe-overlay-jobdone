@@ -6,70 +6,132 @@
     android:orientation="vertical"
     android:gravity="start">
 
-    <!-- Toggle lever row -->
+    <!-- ── Header card: green scan button + blue lookup button ── -->
     <LinearLayout
         android:id="@+id/toggle_row"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:orientation="vertical"
         android:background="#CC0A0A1A"
         android:paddingHorizontal="10dp"
-        android:paddingVertical="6dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp"
         android:elevation="10dp">
 
-        <!-- Lever/power icon -->
-        <ImageView
-            android:id="@+id/btn_toggle"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@android:drawable/ic_media_play"
-            android:background="@drawable/circle_background"
-            android:padding="10dp"
-            android:elevation="8dp" />
-
-        <!-- Status text: SCANNING / OFF -->
-        <TextView
-            android:id="@+id/tv_toggle_label"
+        <!-- Row 1: green scan button + label -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="OFF"
-            android:textColor="#FF888888"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:fontFamily="monospace" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        <!-- Last scan timestamp -->
+            <ImageView
+                android:id="@+id/btn_toggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_media_play"
+                android:background="@drawable/circle_background"
+                android:padding="10dp"
+                android:elevation="8dp" />
+
+            <TextView
+                android:id="@+id/tv_toggle_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="○ OFF"
+                android:textColor="#FF888888"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- Row 2: blue lookup button + label -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="6dp">
+
+            <ImageView
+                android:id="@+id/btn_lookup"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_search"
+                android:background="@drawable/circle_background_blue"
+                android:padding="10dp"
+                android:elevation="8dp" />
+
+            <TextView
+                android:id="@+id/tv_lookup_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="○ LOOKUP"
+                android:textColor="#FF4488FF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- Row 3: last scan timestamp -->
         <TextView
             android:id="@+id/tv_last_scan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
             android:text=""
             android:textColor="#FF555566"
             android:textSize="10sp"
+            android:fontFamily="monospace"
             android:visibility="gone" />
 
     </LinearLayout>
 
-    <!-- Results panel — always visible when scanning is ON -->
+    <!-- "48h median" subtitle -->
+    <TextView
+        android:id="@+id/tv_median_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginStart="4dp"
+        android:text="48h median"
+        android:textColor="#FF666688"
+        android:textSize="9sp"
+        android:fontFamily="monospace"
+        android:visibility="gone" />
+
+    <!-- Divider -->
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="2dp"
+        android:background="#33FFFFFF"
+        android:visibility="gone" />
+
+    <!-- Scrollable results — width adapts to longest item name (140–260dp) -->
     <ScrollView
         android:id="@+id/scroll_results"
-        android:layout_width="230dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
+        android:minWidth="140dp"
+        android:maxWidth="260dp"
         android:maxHeight="350dp"
         android:visibility="gone"
         android:elevation="8dp">
 
         <LinearLayout
             android:id="@+id/results_container"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#DD0A0A1A"
-            android:padding="8dp" />
+            android:padding="4dp" />
 
     </ScrollView>
 

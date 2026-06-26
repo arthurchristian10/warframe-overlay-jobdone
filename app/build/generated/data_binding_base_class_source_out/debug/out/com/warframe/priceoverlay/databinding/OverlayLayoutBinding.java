@@ -22,7 +22,13 @@ public final class OverlayLayoutBinding implements ViewBinding {
   private final LinearLayout rootView;
 
   @NonNull
+  public final ImageView btnLookup;
+
+  @NonNull
   public final ImageView btnToggle;
+
+  @NonNull
+  public final View divider;
 
   @NonNull
   public final LinearLayout overlayRoot;
@@ -40,19 +46,31 @@ public final class OverlayLayoutBinding implements ViewBinding {
   public final TextView tvLastScan;
 
   @NonNull
+  public final TextView tvLookupLabel;
+
+  @NonNull
+  public final TextView tvMedianLabel;
+
+  @NonNull
   public final TextView tvToggleLabel;
 
-  private OverlayLayoutBinding(@NonNull LinearLayout rootView, @NonNull ImageView btnToggle,
-      @NonNull LinearLayout overlayRoot, @NonNull LinearLayout resultsContainer,
-      @NonNull ScrollView scrollResults, @NonNull LinearLayout toggleRow,
-      @NonNull TextView tvLastScan, @NonNull TextView tvToggleLabel) {
+  private OverlayLayoutBinding(@NonNull LinearLayout rootView, @NonNull ImageView btnLookup,
+      @NonNull ImageView btnToggle, @NonNull View divider, @NonNull LinearLayout overlayRoot,
+      @NonNull LinearLayout resultsContainer, @NonNull ScrollView scrollResults,
+      @NonNull LinearLayout toggleRow, @NonNull TextView tvLastScan,
+      @NonNull TextView tvLookupLabel, @NonNull TextView tvMedianLabel,
+      @NonNull TextView tvToggleLabel) {
     this.rootView = rootView;
+    this.btnLookup = btnLookup;
     this.btnToggle = btnToggle;
+    this.divider = divider;
     this.overlayRoot = overlayRoot;
     this.resultsContainer = resultsContainer;
     this.scrollResults = scrollResults;
     this.toggleRow = toggleRow;
     this.tvLastScan = tvLastScan;
+    this.tvLookupLabel = tvLookupLabel;
+    this.tvMedianLabel = tvMedianLabel;
     this.tvToggleLabel = tvToggleLabel;
   }
 
@@ -83,9 +101,21 @@ public final class OverlayLayoutBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btn_lookup;
+      ImageView btnLookup = ViewBindings.findChildViewById(rootView, id);
+      if (btnLookup == null) {
+        break missingId;
+      }
+
       id = R.id.btn_toggle;
       ImageView btnToggle = ViewBindings.findChildViewById(rootView, id);
       if (btnToggle == null) {
+        break missingId;
+      }
+
+      id = R.id.divider;
+      View divider = ViewBindings.findChildViewById(rootView, id);
+      if (divider == null) {
         break missingId;
       }
 
@@ -115,14 +145,27 @@ public final class OverlayLayoutBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tv_lookup_label;
+      TextView tvLookupLabel = ViewBindings.findChildViewById(rootView, id);
+      if (tvLookupLabel == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_median_label;
+      TextView tvMedianLabel = ViewBindings.findChildViewById(rootView, id);
+      if (tvMedianLabel == null) {
+        break missingId;
+      }
+
       id = R.id.tv_toggle_label;
       TextView tvToggleLabel = ViewBindings.findChildViewById(rootView, id);
       if (tvToggleLabel == null) {
         break missingId;
       }
 
-      return new OverlayLayoutBinding((LinearLayout) rootView, btnToggle, overlayRoot,
-          resultsContainer, scrollResults, toggleRow, tvLastScan, tvToggleLabel);
+      return new OverlayLayoutBinding((LinearLayout) rootView, btnLookup, btnToggle, divider,
+          overlayRoot, resultsContainer, scrollResults, toggleRow, tvLastScan, tvLookupLabel,
+          tvMedianLabel, tvToggleLabel);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
