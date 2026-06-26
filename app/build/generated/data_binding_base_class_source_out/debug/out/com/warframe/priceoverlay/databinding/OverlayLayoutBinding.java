@@ -22,6 +22,9 @@ public final class OverlayLayoutBinding implements ViewBinding {
   private final LinearLayout rootView;
 
   @NonNull
+  public final ImageView btnCropSettings;
+
+  @NonNull
   public final ImageView btnLookup;
 
   @NonNull
@@ -54,13 +57,14 @@ public final class OverlayLayoutBinding implements ViewBinding {
   @NonNull
   public final TextView tvToggleLabel;
 
-  private OverlayLayoutBinding(@NonNull LinearLayout rootView, @NonNull ImageView btnLookup,
-      @NonNull ImageView btnToggle, @NonNull View divider, @NonNull LinearLayout overlayRoot,
-      @NonNull LinearLayout resultsContainer, @NonNull ScrollView scrollResults,
-      @NonNull LinearLayout toggleRow, @NonNull TextView tvLastScan,
-      @NonNull TextView tvLookupLabel, @NonNull TextView tvMedianLabel,
-      @NonNull TextView tvToggleLabel) {
+  private OverlayLayoutBinding(@NonNull LinearLayout rootView, @NonNull ImageView btnCropSettings,
+      @NonNull ImageView btnLookup, @NonNull ImageView btnToggle, @NonNull View divider,
+      @NonNull LinearLayout overlayRoot, @NonNull LinearLayout resultsContainer,
+      @NonNull ScrollView scrollResults, @NonNull LinearLayout toggleRow,
+      @NonNull TextView tvLastScan, @NonNull TextView tvLookupLabel,
+      @NonNull TextView tvMedianLabel, @NonNull TextView tvToggleLabel) {
     this.rootView = rootView;
+    this.btnCropSettings = btnCropSettings;
     this.btnLookup = btnLookup;
     this.btnToggle = btnToggle;
     this.divider = divider;
@@ -101,6 +105,12 @@ public final class OverlayLayoutBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btn_crop_settings;
+      ImageView btnCropSettings = ViewBindings.findChildViewById(rootView, id);
+      if (btnCropSettings == null) {
+        break missingId;
+      }
+
       id = R.id.btn_lookup;
       ImageView btnLookup = ViewBindings.findChildViewById(rootView, id);
       if (btnLookup == null) {
@@ -163,9 +173,9 @@ public final class OverlayLayoutBinding implements ViewBinding {
         break missingId;
       }
 
-      return new OverlayLayoutBinding((LinearLayout) rootView, btnLookup, btnToggle, divider,
-          overlayRoot, resultsContainer, scrollResults, toggleRow, tvLastScan, tvLookupLabel,
-          tvMedianLabel, tvToggleLabel);
+      return new OverlayLayoutBinding((LinearLayout) rootView, btnCropSettings, btnLookup,
+          btnToggle, divider, overlayRoot, resultsContainer, scrollResults, toggleRow, tvLastScan,
+          tvLookupLabel, tvMedianLabel, tvToggleLabel);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

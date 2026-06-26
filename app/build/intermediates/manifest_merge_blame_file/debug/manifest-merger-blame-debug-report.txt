@@ -9,17 +9,17 @@
 9        android:targetSdkVersion="34" />
 10
 11    <uses-permission android:name="android.permission.INTERNET" />
-11-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:4:5-67
-11-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:4:22-64
+11-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:4:5-67
+11-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:4:22-64
 12    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-12-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:5:5-78
-12-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:5:22-75
+12-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:5:5-78
+12-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:5:22-75
 13    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-13-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:6:5-77
-13-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:6:22-74
+13-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:6:5-77
+13-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:6:22-74
 14    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
-14-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:7:5-94
-14-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:7:22-91
+14-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:7:5-94
+14-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:7:22-91
 15
 16    <permission
 16-->[androidx.core:core:1.12.0] C:\Users\yasmi\scoop\apps\gradle\current\.gradle\caches\transforms-3\b4e4f691e4e9f09b2d7e8876bd9a90e3\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
@@ -37,55 +37,55 @@
 22-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\yasmi\scoop\apps\gradle\current\.gradle\caches\transforms-3\fa16cd14601a22f2f9949ab4dc815e51\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:25:22-76
 23
 24    <application
-24-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:9:5-34:19
+24-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:9:5-34:19
 25        android:allowBackup="true"
-25-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:10:9-35
+25-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:10:9-35
 26        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 26-->[androidx.core:core:1.12.0] C:\Users\yasmi\scoop\apps\gradle\current\.gradle\caches\transforms-3\b4e4f691e4e9f09b2d7e8876bd9a90e3\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
 27        android:debuggable="true"
 28        android:extractNativeLibs="false"
 29        android:icon="@drawable/ic_launcher"
-29-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:11:9-45
+29-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:11:9-45
 30        android:label="@string/app_name"
-30-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:12:9-41
+30-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:12:9-41
 31        android:roundIcon="@drawable/ic_launcher"
-31-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:13:9-50
+31-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:13:9-50
 32        android:supportsRtl="true"
-32-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:14:9-35
+32-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:14:9-35
 33        android:theme="@style/Theme.ArtFrame"
-33-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:15:9-46
+33-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:15:9-46
 34        android:usesCleartextTraffic="false" >
-34-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:16:9-45
+34-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:16:9-45
 35        <activity
-35-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:18:9-27:20
+35-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:18:9-27:20
 36            android:name="com.warframe.priceoverlay.MainActivity"
-36-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:19:13-41
+36-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:19:13-41
 37            android:exported="true"
-37-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:20:13-36
+37-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:20:13-36
 38            android:label="@string/app_name"
-38-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:21:13-45
+38-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:21:13-45
 39            android:windowSoftInputMode="adjustResize" >
-39-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:22:13-55
+39-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:22:13-55
 40            <intent-filter>
-40-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:23:13-26:29
+40-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:23:13-26:29
 41                <action android:name="android.intent.action.MAIN" />
-41-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:24:17-69
-41-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:24:25-66
+41-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:24:17-69
+41-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:24:25-66
 42
 43                <category android:name="android.intent.category.LAUNCHER" />
-43-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:25:17-77
-43-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:25:27-74
+43-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:25:17-77
+43-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:25:27-74
 44            </intent-filter>
 45        </activity>
 46
 47        <service
-47-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:29:9-32:63
+47-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:29:9-32:63
 48            android:name="com.warframe.priceoverlay.OverlayService"
-48-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:30:13-43
+48-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:30:13-43
 49            android:exported="false"
-49-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:31:13-37
+49-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:31:13-37
 50            android:foregroundServiceType="mediaProjection" />
-50-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframe-price-overlay\app\src\main\AndroidManifest.xml:32:13-60
+50-->C:\Users\yasmi\.gemini\antigravity-ide\scratch\warframeoverlay\app\src\main\AndroidManifest.xml:32:13-60
 51        <service
 51-->[com.google.android.gms:play-services-mlkit-text-recognition-common:19.0.0] C:\Users\yasmi\scoop\apps\gradle\current\.gradle\caches\transforms-3\7fabbde87e40621f8224c2f4eeb835bb\transformed\jetified-play-services-mlkit-text-recognition-common-19.0.0\AndroidManifest.xml:9:9-15:19
 52            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"

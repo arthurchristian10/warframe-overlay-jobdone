@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:gravity="start">
 
-    <!-- ── Header card: green scan button + blue lookup button ── -->
+    <!-- ── Header card: green scan button + blue cracking button ── -->
     <LinearLayout
         android:id="@+id/toggle_row"
         android:layout_width="wrap_content"
@@ -47,13 +47,22 @@
 
         </LinearLayout>
 
-        <!-- Row 2: blue lookup button + label -->
+        <!-- Row 2: cog (crop settings) + blue cracking button + label -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="6dp">
+
+            <ImageView
+                android:id="@+id/btn_crop_settings"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@android:drawable/ic_menu_preferences"
+                android:padding="3dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Crop region for cracking" />
 
             <ImageView
                 android:id="@+id/btn_lookup"
@@ -69,7 +78,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="○ LOOKUP"
+                android:text="○ CRACKING"
                 android:textColor="#FF4488FF"
                 android:textSize="12sp"
                 android:textStyle="bold"
