@@ -6,14 +6,17 @@ import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import android.widget.TextView
 import com.warframe.priceoverlay.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var itemDatabase: ItemDatabase
     private lateinit var mediaProjectionManager: MediaProjectionManager
     private val screenCaptureLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -33,6 +36,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        itemDatabase = ItemDatabase(this)
+        // Try to update database in background whenever app is opened
+        itemDatabase.updateFromApi { status ->
+            runOnUiThread {
+                // You could add a small status text in your activity_main.xml if you want
+                Log.d("MainActivity", "Database Status: $status")
+            }
+        }
+
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         binding.btnPermission.setOnClickListener {
             if (!Settings.canDrawOverlays(this)) {

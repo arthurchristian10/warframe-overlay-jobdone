@@ -33,37 +33,27 @@ class ItemScanner(
         val sf = scaleFactorFor(bitmap.width, bitmap.height)
         val scaled = bitmap.scale((bitmap.width * sf).toInt(), (bitmap.height * sf).toInt(), true)
 
-        val varA = preprocessGrayContrast(scaled)
-        val varB = preprocessBinarized(scaled)
-        val varC = preprocessSharpened(scaled)
+        // Optimized single-pass preprocessing
+        val processed = preprocessForOcr(scaled)
         scaled.recycle()
         
         try {
-            val dA = async { runOcr(varA) }
-            val dB = async { runOcr(varB) }
-            val dC = async { runOcr(varC) }
-            
-            val ocrResults = listOf(dA, dB, dC).awaitAll().filterNotNull()
+            val vt = runOcr(processed) ?: return@withContext emptyList()
             
             val detectedItems = mutableMapOf<String, ScannedItem>()
             val debugLines = mutableListOf<String>()
 
-            for (vt in ocrResults) {
-                val blocks = buildMergedBlocks(vt)
-                matchBlocks(blocks, sf, cropOffset, lookupMode, detectedItems, debugLines)
-            }
+            val blocks = buildMergedBlocks(vt)
+            matchBlocks(blocks, sf, cropOffset, lookupMode, detectedItems, debugLines)
 
             if (debugLines.isNotEmpty()) {
                 val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-                val header = "── $time ────────────────\n"
-                onDebugLog(header + debugLines.distinct().joinToString("\n\n"))
+                onDebugLog("── $time ────────────────\n" + debugLines.distinct().joinToString("\n\n"))
             }
 
             detectedItems.values.toList()
         } finally {
-            varA.recycle()
-            varB.recycle()
-            varC.recycle()
+            processed.recycle()
         }
     }
 
@@ -86,42 +76,25 @@ class ItemScanner(
         }
     }
 
-    private fun preprocessGrayContrast(bmp: Bitmap): Bitmap {
-        val gray = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(gray)
-        canvas.drawBitmap(bmp, 0f, 0f, Paint().apply {
-            colorFilter = ColorMatrixColorFilter(ColorMatrix().also { it.setSaturation(0f) })
-        })
+    private fun preprocessForOcr(bmp: Bitmap): Bitmap {
+        // High contrast + Sharpness + Grayscale in one pass
         val out = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
-        Canvas(out).drawBitmap(gray, 0f, 0f, Paint().apply {
-            colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
-                2.2f,0f,0f,0f,-60f, 0f,2.2f,0f,0f,-60f, 0f,0f,2.2f,0f,-60f, 0f,0f,0f,1f,0f
-            )))
-        })
-        gray.recycle(); return out
-    }
-
-    private fun preprocessBinarized(bmp: Bitmap): Bitmap {
-        val gray = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
-        Canvas(gray).drawBitmap(bmp, 0f, 0f, Paint().apply {
-            colorFilter = ColorMatrixColorFilter(ColorMatrix().also { it.setSaturation(0f) })
-        })
-        val out = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
-        Canvas(out).drawBitmap(gray, 0f, 0f, Paint().apply {
-            colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
-                5f,0f,0f,0f,-400f, 0f,5f,0f,0f,-400f, 0f,0f,5f,0f,-400f, 0f,0f,0f,1f,0f
-            )))
-        })
-        gray.recycle(); return out
-    }
-
-    private fun preprocessSharpened(bmp: Bitmap): Bitmap {
-        val out = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
-        Canvas(out).drawBitmap(bmp, 0f, 0f, Paint().apply {
-            colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
-                1.5f,0f,0f,0f,-20f, 0f,1.5f,0f,0f,-20f, 0f,0f,1.5f,0f,-20f, 0f,0f,0f,1f,0f
-            )))
-        })
+        val canvas = Canvas(out)
+        val paint = Paint().apply {
+            colorFilter = ColorMatrixColorFilter(ColorMatrix().apply {
+                setSaturation(0f) // Grayscale
+                // Matrix for high contrast and brightness correction
+                val contrast = 2.0f
+                val brightness = -40f
+                postConcat(ColorMatrix(floatArrayOf(
+                    contrast, 0f, 0f, 0f, brightness,
+                    0f, contrast, 0f, 0f, brightness,
+                    0f, 0f, contrast, 0f, brightness,
+                    0f, 0f, 0f, 1f, 0f
+                )))
+            })
+        }
+        canvas.drawBitmap(bmp, 0f, 0f, paint)
         return out
     }
 
@@ -205,7 +178,6 @@ class ItemScanner(
                     
                     if (lookupMode && match.entry.name.contains("relic", ignoreCase = true)) continue
 
-                    // Calculate precise native bounding box of ONLY matched elements
                     val preciseNative = Rect(Int.MAX_VALUE, Int.MAX_VALUE, Int.MIN_VALUE, Int.MIN_VALUE)
                     subElements.forEach { el ->
                         el.boundingBox?.let { bb ->
@@ -216,7 +188,6 @@ class ItemScanner(
                         }
                     }
                     
-                    // Convert native scaled coordinates to final screen coordinates
                     val screenRect = Rect(
                         (preciseNative.left / sf).roundToInt() + cropOffset.x,
                         (preciseNative.top / sf).roundToInt() + cropOffset.y,
@@ -226,7 +197,6 @@ class ItemScanner(
 
                     detectedItems[match.entry.slug] = ScannedItem(match.entry, screenRect, match.confidence)
                     matchedInBlock = true
-                    
                     debugLines.add("✓ [${match.matchType}] \"$query\"\n  → ${match.entry.name} (${"%.2f".format(match.confidence)})")
                     break@outer
                 }

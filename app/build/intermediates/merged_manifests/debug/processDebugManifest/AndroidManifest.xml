@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <permission
         android:name="com.warframe.priceoverlay.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -46,8 +47,9 @@
 
         <service
             android:name="com.warframe.priceoverlay.OverlayService"
+            android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
+            android:foregroundServiceType="mediaProjection|dataSync" />
         <service
             android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"
             android:directBootAware="true"
