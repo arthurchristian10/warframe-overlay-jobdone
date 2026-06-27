@@ -3,16 +3,16 @@ package com.warframe.priceoverlay
 import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
-import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.os.Build
 import android.view.*
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 
 class OverlayUIManager(
     private val service: Service,
@@ -22,7 +22,7 @@ class OverlayUIManager(
     private val onToggleDebug: () -> Unit
 ) {
     private val windowManager = service.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    private val overlayView: View = LayoutInflater.from(service).inflate(R.layout.overlay_layout, null)
+    private val overlayView: View = LayoutInflater.from(service).inflate(R.layout.overlay_layout, FrameLayout(service), false)
     
     private val btnToggle: ImageView? = overlayView.findViewById(R.id.btn_toggle)
     private val tvToggleLabel: TextView? = overlayView.findViewById(R.id.tv_toggle_label)
@@ -74,11 +74,10 @@ class OverlayUIManager(
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    /* Main scanning toggle deactivated for now - future reference:
+                    /* Main scanning toggle deactivated for now - future reference: */
                     if (Math.abs(e.rawX - iTX) < 12 && Math.abs(e.rawY - iTY) < 12) {
                         onToggleScan()
                     }
-                    */
                     true
                 }
                 else -> false
@@ -92,15 +91,15 @@ class OverlayUIManager(
 
     fun setScanningState(active: Boolean) {
         if (active) {
-            btnToggle?.setColorFilter(Color.parseColor("#FF00E676"))
-            tvToggleLabel?.text = "● SCANNING"
-            tvToggleLabel?.setTextColor(Color.parseColor("#FF00E676"))
+            btnToggle?.setColorFilter("#FF00E676".toColorInt())
+            tvToggleLabel?.text = service.getString(R.string.scan_on)
+            tvToggleLabel?.setTextColor("#FF00E676".toColorInt())
             tvLastScan.visibility = View.VISIBLE
             tvMedianLabel.visibility = View.VISIBLE
         } else {
             btnToggle?.clearColorFilter()
-            tvToggleLabel?.text = "○ OFF"
-            tvToggleLabel?.setTextColor(Color.parseColor("#FF888888"))
+            tvToggleLabel?.text = service.getString(R.string.scan_off)
+            tvToggleLabel?.setTextColor("#FF888888".toColorInt())
             tvLastScan.visibility = View.GONE
             tvMedianLabel.visibility = View.GONE
             clearResults()
@@ -108,33 +107,32 @@ class OverlayUIManager(
     }
 
     fun setLookupState(active: Boolean, complete: Boolean = false) {
-        val color = Color.parseColor("#FF4488FF")
+        val color = "#FF4488FF".toColorInt()
         if (active) {
             btnLookup.setColorFilter(color)
-            tvLookupLabel.text = if (complete) "✓ CRACKING" else "● CRACKING"
+            tvLookupLabel.text = if (complete) service.getString(R.string.cracking_done) else service.getString(R.string.cracking_on)
             tvLookupLabel.setTextColor(color)
         } else {
             btnLookup.clearColorFilter()
-            tvLookupLabel.text = "○ CRACKING"
+            tvLookupLabel.text = service.getString(R.string.cracking_off)
             tvLookupLabel.setTextColor(color)
         }
     }
 
     fun updateLastScanTime(time: String) {
-        tvLastScan.text = "  last scan $time"
+        tvLastScan.text = service.getString(R.string.last_scan, time)
     }
 
     fun setRow(slug: String, name: String, statusText: String, colorHex: String) {
-        val label = "$name\n  $statusText"
         val existing = displayedRows[slug]
         if (existing != null) {
-            existing.text = label
-            existing.setTextColor(Color.parseColor(colorHex))
+            existing.text = service.getString(R.string.row_format, name, statusText)
+            existing.setTextColor(colorHex.toColorInt())
         } else {
             val tv = TextView(service).apply {
-                text = label
+                text = service.getString(R.string.row_format, name, statusText)
                 textSize = 8f
-                setTextColor(Color.parseColor(colorHex))
+                setTextColor(colorHex.toColorInt())
                 setPadding(2, 1, 2, 1)
                 typeface = Typeface.MONOSPACE
                 maxLines = 2

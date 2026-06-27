@@ -1,7 +1,9 @@
 package com.warframe.priceoverlay
 
-import android.app.*
-import android.content.Context
+import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
@@ -11,7 +13,6 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.google.mlkit.vision.text.TextRecognition
@@ -19,6 +20,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlin.time.Duration.Companion.milliseconds
 
 class OverlayService : Service() {
 
@@ -56,7 +58,7 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        prefs = getSharedPreferences("wf_overlay_prefs", Context.MODE_PRIVATE)
+        prefs = getSharedPreferences("wf_overlay_prefs", MODE_PRIVATE)
         loadCropRect()
         
         itemDatabase = ItemDatabase(this).apply { load() }
@@ -77,6 +79,7 @@ class OverlayService : Service() {
             onToggleDebug = { debugManager.toggle() }
         )
 
+        @Suppress("InternalInsetResource", "DiscouragedApi")
         val resId = resources.getIdentifier("status_bar_height", "dimen", "android")
         statusBarHeight = if (resId > 0) resources.getDimensionPixelSize(resId) else 0
     }
@@ -90,31 +93,26 @@ class OverlayService : Service() {
         startForegroundNotification()
 
         if (resultCode == Activity.RESULT_OK && resultData != null && screenCapturer == null) {
-            val mpm = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+            val mpm = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
             val mp = mpm.getMediaProjection(resultCode, resultData)
             setupCapturer(mp)
-            
-            // Automatic start of main scanning deactivated - kept for reference
-            // startScanning()
         }
         return START_NOT_STICKY
     }
 
     private fun setupCapturer(mp: MediaProjection) {
         screenCapturer = ScreenCapturer(this, mp) {
-            // Orientation changed, ensure UI is still visible
             uiManager.ensureInsideScreen()
         }
     }
 
     private fun startForegroundNotification() {
         val channelId = "OverlayServiceChannel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val ch = NotificationChannel(channelId, "Warframe Overlay", NotificationManager.IMPORTANCE_LOW)
-            getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
-        }
+        val ch = NotificationChannel(channelId, "Warframe Overlay", NotificationManager.IMPORTANCE_LOW)
+        getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
+        
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Warframe Overlay Active")
+            .setContentTitle(getString(R.string.app_name))
             .setSmallIcon(R.drawable.ic_launcher)
             .build()
 
@@ -122,12 +120,6 @@ class OverlayService : Service() {
             startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
         else startForeground(1, notification)
     }
-
-    /*
-    private fun toggleScanning() {
-        if (scanningActive) stopScanning() else startScanning()
-    }
-    */
 
     private fun startScanning() {
         if (screenCapturer == null) {
@@ -139,7 +131,7 @@ class OverlayService : Service() {
         scanLoopJob = serviceScope.launch {
             while (isActive) {
                 runSingleScan()
-                delay(1000)
+                delay(1000.milliseconds)
             }
         }
     }
@@ -147,7 +139,7 @@ class OverlayService : Service() {
     private fun stopScanning() {
         scanningActive = false
         scanLoopJob?.cancel()
-        uiManager.setScanningState(false)
+        uiManager.setScanningState(active = false)
         fetchJobs.values.forEach { it.cancel() }
         fetchJobs.clear()
         if (!lookupModeActive) {
@@ -159,10 +151,10 @@ class OverlayService : Service() {
     private fun toggleLookupMode() {
         lookupModeActive = !lookupModeActive
         if (lookupModeActive) {
-            uiManager.setLookupState(true)
+            uiManager.setLookupState(active = true)
             startLookupLoop()
         } else {
-            uiManager.setLookupState(false)
+            uiManager.setLookupState(active = false)
             stopLookupLoop()
         }
     }
@@ -172,11 +164,11 @@ class OverlayService : Service() {
         lookupLoopJob = serviceScope.launch {
             while (isActive) {
                 if (relicManager.activePopupCount() >= 4) {
-                    uiManager.setLookupState(true, complete = true)
+                    uiManager.setLookupState(active = true, complete = true)
                     break
                 }
                 runSingleScan()
-                delay(800)
+                delay(800.milliseconds)
             }
         }
     }
@@ -198,11 +190,11 @@ class OverlayService : Service() {
             bitmap = bitmap,
             cropOffset = offset,
             lookupMode = lookupModeActive,
-            onDebugLog = { debugManager.postText(it) }
+            onDebugLog = { debugManager.postText(it) },
         )
         bitmap.recycle()
 
-        val seenThisCycle = scannedItems.map { it.entry.slug }.toSet()
+        val seenThisCycle = scannedItems.asSequence().map { it.entry.slug }.toSet()
         scannedItems.forEach { 
             voteEntries[it.entry.slug] = it.entry
             itemBounds[it.entry.slug] = it.bounds
@@ -223,7 +215,7 @@ class OverlayService : Service() {
                 voteBank[slug] = VoteEntry((prev?.votes ?: 0) + 1, scanCycle)
             } else {
                 val lastSeen = prev?.lastSeenCycle ?: scanCycle
-                if (scanCycle - lastSeen > 3) {
+                if ((scanCycle - lastSeen) > 3) {
                     val newVotes = (prev?.votes ?: 1) - 1
                     if (newVotes <= 0) voteBank.remove(slug) 
                     else voteBank[slug] = VoteEntry(newVotes, lastSeen)
@@ -235,29 +227,23 @@ class OverlayService : Service() {
     private fun processResults() {
         val activeSlugs = voteBank.filter { it.value.votes >= 1 }.keys
         
-        // Sync UI rows: Add/Update active ones
         for (slug in activeSlugs) {
             val entry = voteEntries[slug] ?: continue
             if (lookupModeActive) {
                 val bounds = itemBounds[slug]
-                if (bounds != null) {
-                    relicManager.createRelicPopup(slug, entry.name, bounds, screenCapturer?.screenWidth ?: 0, statusBarHeight)
+                bounds?.let {
+                    relicManager.createRelicPopup(slug, entry.name, it, screenCapturer?.screenWidth ?: 0, statusBarHeight)
                 }
             } else {
-                /* Main scanning results deactivated - future reference:
-                uiManager.setRow(slug, entry.name, "loading...", "#FFAAAAAA")
-                launchFetch(slug, entry)
-                */
+                /* Main scanning results deactivated */
             }
         }
 
-        // Cleanup: Dismiss relic popups or remove list rows for items that vanished
         val slugsToRemove = voteEntries.keys.filter { it !in activeSlugs }
         slugsToRemove.forEach { slug ->
             uiManager.removeRow(slug)
             relicManager.dismissRelicPopup(slug)
             fetchJobs.remove(slug)?.cancel()
-            // We keep voteEntries/itemBounds as a small cache for quick re-discovery
         }
     }
 
@@ -269,7 +255,7 @@ class OverlayService : Service() {
             }
             when (result) {
                 is ApiResult.Success -> uiManager.setRow(slug, entry.name, "${result.price}p", "#FF80FF80")
-                is ApiResult.NotFound -> uiManager.setRow(slug, entry.name, "no data", "#FFFF8080")
+                is ApiResult.NotFound -> uiManager.setRow(slug, entry.name, getString(R.string.no_data), "#FFFF8080")
                 else -> uiManager.setRow(slug, entry.name, "error", "#FFFFAA44")
             }
         }
@@ -281,12 +267,13 @@ class OverlayService : Service() {
 
     private fun saveCropRect(r: Rect) {
         cropRect = r
-        prefs.edit()
-            .putInt("crop_left", r.left)
-            .putInt("crop_top", r.top)
-            .putInt("crop_right", r.right)
-            .putInt("crop_bottom", r.bottom)
-            .apply()
+        prefs.edit().apply {
+            putInt("crop_left", r.left)
+            putInt("crop_top", r.top)
+            putInt("crop_right", r.right)
+            putInt("crop_bottom", r.bottom)
+            apply()
+        }
     }
 
     private fun loadCropRect() {

@@ -9,7 +9,7 @@ import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
-import android.util.DisplayMetrics
+import android.os.Build
 import android.util.Log
 import android.view.WindowManager
 
@@ -35,12 +35,18 @@ class ScreenCapturer(
 
     private fun setupDisplay() {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val metrics = DisplayMetrics()
-        windowManager.defaultDisplay.getRealMetrics(metrics)
+        val bounds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            windowManager.currentWindowMetrics.bounds
+        } else {
+            val metrics = android.util.DisplayMetrics()
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getRealMetrics(metrics)
+            Rect(0, 0, metrics.widthPixels, metrics.heightPixels)
+        }
 
-        screenWidth = metrics.widthPixels
-        screenHeight = metrics.heightPixels
-        screenDensity = metrics.densityDpi
+        screenWidth = bounds.width()
+        screenHeight = bounds.height()
+        screenDensity = context.resources.displayMetrics.densityDpi
 
         Log.d("ScreenCapturer", "Setup: ${screenWidth}x${screenHeight} @ $screenDensity")
 
@@ -53,7 +59,6 @@ class ScreenCapturer(
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader?.surface, null, null
             )
         } else {
-            // Use resize instead of recreating to avoid SecurityException on some devices
             virtualDisplay?.resize(screenWidth, screenHeight, screenDensity)
             virtualDisplay?.surface = imageReader?.surface
         }
@@ -65,12 +70,17 @@ class ScreenCapturer(
         dm.registerDisplayListener(object : DisplayManager.DisplayListener {
             override fun onDisplayChanged(displayId: Int) {
                 val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val metrics = DisplayMetrics()
-                windowManager.defaultDisplay.getRealMetrics(metrics)
+                val bounds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    windowManager.currentWindowMetrics.bounds
+                } else {
+                    val metrics = android.util.DisplayMetrics()
+                    @Suppress("DEPRECATION")
+                    windowManager.defaultDisplay.getRealMetrics(metrics)
+                    Rect(0, 0, metrics.widthPixels, metrics.heightPixels)
+                }
                 
-                if (metrics.widthPixels != screenWidth || metrics.heightPixels != screenHeight) {
-                    Log.d("ScreenCapturer", "Orientation change: ${metrics.widthPixels}x${metrics.heightPixels}")
-                    // Re-setup on the main thread to avoid race conditions
+                if (bounds.width() != screenWidth || bounds.height() != screenHeight) {
+                    Log.d("ScreenCapturer", "Orientation change: ${bounds.width()}x${bounds.height()}")
                     handler.post {
                         recreateDisplay()
                         onOrientationChanged()
@@ -92,7 +102,6 @@ class ScreenCapturer(
     }
 
     private fun recreateDisplay() {
-        // Don't release virtualDisplay here, just close old reader
         imageReader?.close()
         imageReader = null
         setupDisplay()
@@ -101,8 +110,7 @@ class ScreenCapturer(
     fun captureFrame(cropRect: Rect?): Bitmap? {
         val reader = imageReader ?: return null
         return try {
-            val image = reader.acquireLatestImage() ?: return null
-            try {
+            reader.acquireLatestImage()?.use { image ->
                 val p = image.planes[0]
                 val rowPadding = p.rowStride - p.pixelStride * screenWidth
                 val bmp = Bitmap.createBitmap(
@@ -127,8 +135,6 @@ class ScreenCapturer(
                 } else {
                     full
                 }
-            } finally {
-                image.close()
             }
         } catch (e: Exception) {
             Log.e("ScreenCapturer", "Capture failed: ${e.message}")

@@ -17,9 +17,8 @@
         android:id="@+id/popup_item_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Mesa Prime Neuroptics"
         android:textColor="#FFEEDDFF"
-        android:textSize="10sp"
+        android:textSize="11sp"
         android:textStyle="bold"
         android:fontFamily="monospace"
         android:maxLines="2"
@@ -38,9 +37,9 @@
         android:id="@+id/popup_plat_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="48h sell"
+        android:text="@string/forty_eight_h_sell"
         android:textColor="#FF888899"
-        android:textSize="9sp"
+        android:textSize="11sp"
         android:fontFamily="monospace" />
 
     <!-- 48h sell price value -->
@@ -60,9 +59,9 @@
         android:id="@+id/popup_ducat_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="ducats"
+        android:text="@string/ducats"
         android:textColor="#FF888899"
-        android:textSize="9sp"
+        android:textSize="11sp"
         android:fontFamily="monospace" />
 
     <!-- Ducat value -->
@@ -82,9 +81,9 @@
         android:id="@+id/popup_ratio_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="d/p ratio"
+        android:text="@string/dp_ratio"
         android:textColor="#FF888899"
-        android:textSize="9sp"
+        android:textSize="11sp"
         android:fontFamily="monospace" />
 
     <!-- Ducat / plat ratio value -->
@@ -104,9 +103,9 @@
         android:id="@+id/popup_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="loading…"
+        android:text="@string/loading"
         android:textColor="#FF666677"
-        android:textSize="9sp"
+        android:textSize="11sp"
         android:fontFamily="monospace"
         android:visibility="visible" />
 

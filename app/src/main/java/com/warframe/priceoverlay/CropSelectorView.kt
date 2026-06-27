@@ -10,6 +10,7 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.graphics.toColorInt
 import kotlin.math.abs
 
 // Draggable / resizable rectangle on a dimmed full-screen overlay.
@@ -31,13 +32,13 @@ class CropSelectorView(
         xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     }
     private val borderPaint = Paint().apply {
-        color = Color.parseColor("#FF4488FF")
+        color = "#FF4488FF".toColorInt()
         style = Paint.Style.STROKE
         strokeWidth = 6f
         isAntiAlias = true
     }
     private val handlePaint = Paint().apply {
-        color = Color.parseColor("#FF4488FF")
+        color = "#FF4488FF".toColorInt()
         style = Paint.Style.FILL
         isAntiAlias = true
     }
@@ -77,6 +78,11 @@ class CropSelectorView(
         // Info label
         val label = "${rect.width()}×${rect.height()} px"
         canvas.drawText(label, rect.left.toFloat(), (rect.top - 16).toFloat().coerceAtLeast(40f), labelPaint)
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -123,6 +129,9 @@ class CropSelectorView(
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (event.action == MotionEvent.ACTION_UP) {
+                    performClick()
+                }
                 dragMode = Drag.NONE; return true
             }
         }

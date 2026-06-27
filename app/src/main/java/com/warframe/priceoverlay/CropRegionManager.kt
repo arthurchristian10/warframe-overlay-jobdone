@@ -7,13 +7,13 @@ import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Build
-import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
+import androidx.core.graphics.toColorInt
 
 class CropRegionManager(
     private val service: Service,
@@ -25,10 +25,17 @@ class CropRegionManager(
     fun show(currentCrop: Rect?) {
         if (cropSelectorView != null) { dismiss(); return }
 
-        val metrics = DisplayMetrics()
-        windowManager.defaultDisplay.getRealMetrics(metrics)
-        val currentW = metrics.widthPixels
-        val currentH = metrics.heightPixels
+        val bounds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            windowManager.currentWindowMetrics.bounds
+        } else {
+            val metrics = android.util.DisplayMetrics()
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getRealMetrics(metrics)
+            Rect(0, 0, metrics.widthPixels, metrics.heightPixels)
+        }
+        
+        val currentW = bounds.width()
+        val currentH = bounds.height()
 
         if (currentW == 0 || currentH == 0) {
             Toast.makeText(service, "Screen dimensions not available", Toast.LENGTH_SHORT).show()
@@ -40,8 +47,8 @@ class CropRegionManager(
         val selector = CropSelectorView(service, effectiveCrop, currentW, currentH)
 
         val btnConfirm = Button(service).apply {
-            text = "Confirm crop region"
-            setBackgroundColor(Color.parseColor("#CC4488FF"))
+            text = service.getString(R.string.confirm_crop_region)
+            setBackgroundColor("#CC4488FF".toColorInt())
             setTextColor(Color.WHITE)
             typeface = Typeface.MONOSPACE
             setPadding(32, 16, 32, 16)
@@ -60,14 +67,13 @@ class CropRegionManager(
 
         btnConfirm.setOnClickListener {
             onCropSaved(selector.rect)
+            Toast.makeText(service, service.getString(R.string.crop_saved, selector.rect.width(), selector.rect.height()), Toast.LENGTH_SHORT).show()
             dismiss()
         }
 
         val wlp = WindowManager.LayoutParams(
             currentW, currentH,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
@@ -83,7 +89,8 @@ class CropRegionManager(
     }
 
     fun dismiss() {
-        cropSelectorView?.let { try { windowManager.removeView(it) } catch (_: Exception) {} }
+        val view = cropSelectorView ?: return
+        try { windowManager.removeView(view) } catch (_: Exception) {}
         cropSelectorView = null
     }
 }

@@ -33,14 +33,15 @@
                 android:src="@android:drawable/ic_media_play"
                 android:background="@drawable/circle_background"
                 android:padding="10dp"
-                android:elevation="8dp" />
+                android:elevation="8dp"
+                android:contentDescription="@string/searching" />
 
             <TextView
                 android:id="@+id/tv_toggle_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="○ OFF"
+                android:text="@string/scan_off"
                 android:textColor="#FF888888"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -63,7 +64,7 @@
                 android:src="@android:drawable/ic_menu_preferences"
                 android:padding="3dp"
                 android:layout_marginEnd="6dp"
-                android:contentDescription="Crop region for cracking" />
+                android:contentDescription="@string/confirm_crop_region" />
 
             <ImageView
                 android:id="@+id/btn_lookup"
@@ -72,14 +73,15 @@
                 android:src="@android:drawable/ic_menu_search"
                 android:background="@drawable/circle_background_blue"
                 android:padding="10dp"
-                android:elevation="8dp" />
+                android:elevation="8dp"
+                android:contentDescription="@string/start_overlay" />
 
             <TextView
                 android:id="@+id/tv_lookup_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="○ CRACKING"
+                android:text="@string/cracking_off"
                 android:textColor="#FF4488FF"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -102,14 +104,14 @@
                 android:src="@android:drawable/ic_menu_info_details"
                 android:padding="3dp"
                 android:layout_marginEnd="6dp"
-                android:contentDescription="Toggle OCR debug panel" />
+                android:contentDescription="@string/ocr_debug" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="OCR DEBUG"
+                android:text="@string/ocr_debug"
                 android:textColor="#FF666688"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:fontFamily="monospace" />
 
         </LinearLayout>
@@ -122,7 +124,7 @@
             android:layout_marginTop="4dp"
             android:text=""
             android:textColor="#FF555566"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:fontFamily="monospace"
             android:visibility="gone" />
 
@@ -135,9 +137,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:layout_marginStart="4dp"
-        android:text="48h median"
+        android:text="@string/median_48h"
         android:textColor="#FF666688"
-        android:textSize="9sp"
+        android:textSize="11sp"
         android:fontFamily="monospace"
         android:visibility="gone" />
 

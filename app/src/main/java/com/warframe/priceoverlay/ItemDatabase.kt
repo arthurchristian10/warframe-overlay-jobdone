@@ -56,9 +56,6 @@ class ItemDatabase(private val context: Context) {
         }
     }
 
-    // Back-compat wrapper — discards confidence. Prefer searchItemDetailed.
-    fun searchItem(query: String): ItemEntry? = searchItemDetailed(query)?.entry
-
     fun searchItemDetailed(query: String): MatchResult? {
         if (query.isBlank() || index.isEmpty()) return null
 

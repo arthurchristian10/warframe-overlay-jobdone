@@ -6,8 +6,9 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognizer
 import kotlinx.coroutines.*
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.math.roundToInt
 
 data class ScannedItem(
@@ -20,8 +21,8 @@ class ItemScanner(
     private val itemDatabase: ItemDatabase,
     private val recognizer: TextRecognizer
 ) {
-    private val BLOCK_MERGE_GAP_PX = 60
-    private val BLOCK_MERGE_OVERLAP_F = 0.3f
+    private val blockMergeGapPx = 60
+    private val blockMergeOverlapF = 0.3f
 
     suspend fun scanBitmap(
         bitmap: Bitmap,
@@ -30,7 +31,7 @@ class ItemScanner(
         onDebugLog: (String) -> Unit
     ): List<ScannedItem> = withContext(Dispatchers.Default) {
         val sf = scaleFactorFor(bitmap.width)
-        val scaled = Bitmap.createScaledBitmap(bitmap, (bitmap.width * sf).toInt(), (bitmap.height * sf).toInt(), true)
+        val scaled = bitmap.scale((bitmap.width * sf).toInt(), (bitmap.height * sf).toInt(), true)
 
         val varA = preprocessGrayContrast(scaled)
         val varB = preprocessBinarized(scaled)
@@ -76,11 +77,11 @@ class ItemScanner(
     }
 
     private fun preprocessGrayContrast(bmp: Bitmap): Bitmap {
-        val gray = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
+        val gray = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(gray).drawBitmap(bmp, 0f, 0f, Paint().apply {
             colorFilter = ColorMatrixColorFilter(ColorMatrix().also { it.setSaturation(0f) })
         })
-        val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
+        val out = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(out).drawBitmap(gray, 0f, 0f, Paint().apply {
             colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
                 2.2f,0f,0f,0f,-60f, 0f,2.2f,0f,0f,-60f, 0f,0f,2.2f,0f,-60f, 0f,0f,0f,1f,0f
@@ -90,11 +91,11 @@ class ItemScanner(
     }
 
     private fun preprocessBinarized(bmp: Bitmap): Bitmap {
-        val gray = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
+        val gray = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(gray).drawBitmap(bmp, 0f, 0f, Paint().apply {
             colorFilter = ColorMatrixColorFilter(ColorMatrix().also { it.setSaturation(0f) })
         })
-        val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
+        val out = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(out).drawBitmap(gray, 0f, 0f, Paint().apply {
             colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
                 5f,0f,0f,0f,-400f, 0f,5f,0f,0f,-400f, 0f,0f,5f,0f,-400f, 0f,0f,0f,1f,0f
@@ -104,7 +105,7 @@ class ItemScanner(
     }
 
     private fun preprocessSharpened(bmp: Bitmap): Bitmap {
-        val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
+        val out = createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(out).drawBitmap(bmp, 0f, 0f, Paint().apply {
             colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
                 1.5f,0f,0f,0f,-20f, 0f,1.5f,0f,0f,-20f, 0f,0f,1.5f,0f,-20f, 0f,0f,0f,1f,0f
@@ -136,10 +137,10 @@ class ItemScanner(
         val result = originals.toMutableList()
 
         fun canMerge(a: MergedBlock, b: MergedBlock): Boolean {
-            if (b.rect.top - a.rect.bottom > BLOCK_MERGE_GAP_PX) return false
+            if (b.rect.top - a.rect.bottom > blockMergeGapPx) return false
             val overlapW = minOf(a.rect.right, b.rect.right) - maxOf(a.rect.left, b.rect.left)
             val smallerW = minOf(a.rect.width(), b.rect.width())
-            return smallerW > 0 && overlapW.toFloat() / smallerW >= BLOCK_MERGE_OVERLAP_F
+            return smallerW > 0 && overlapW.toFloat() / smallerW >= blockMergeOverlapF
         }
 
         fun dfs(current: MergedBlock, startIdx: Int, depth: Int) {

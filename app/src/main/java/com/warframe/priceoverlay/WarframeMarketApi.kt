@@ -24,25 +24,22 @@ class WarframeMarketApi {
 
     private val statsCache  = ConcurrentHashMap<String, Pair<Long, Int?>>()
     private val detailCache = ConcurrentHashMap<String, Pair<Long, ItemDetail>>()
-    private val CACHE_TTL_MS = 3 * 60 * 1000L
+    private val cacheTtlMs = 3 * 60 * 1000L
  // ── Rate-limit guard: max 3 requests per second ──────────────────────────
     private var lastRequestTime = 0L
-    private val MIN_REQUEST_INTERVAL_MS = 350L  // ~3 req/sec with margin
+    private val minRequestIntervalMs = 350L  // ~3 req/sec with margin
 
     @Synchronized
     private fun throttle() {
         val now = System.currentTimeMillis()
-        val wait = MIN_REQUEST_INTERVAL_MS - (now - lastRequestTime)
+        val wait = minRequestIntervalMs - (now - lastRequestTime)
         if (wait > 0) Thread.sleep(wait)
         lastRequestTime = System.currentTimeMillis()
     }
-    // ── 48h median sell price ────────────────────────────────────────────────────
-    // Endpoint: GET /v1/items/{slug}/statistics  (still works as of v0.25.0)
-    // Reads statistics_closed["48hours"] → median field per hourly bucket
 
     fun fetchStats(slug: String): ApiResult {
         val cached = statsCache[slug]
-        if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
+        if (cached != null && System.currentTimeMillis() - cached.first < cacheTtlMs) {
             return if (cached.second != null) ApiResult.Success(cached.second!!) else ApiResult.NotFound
         }
         return try {
@@ -90,13 +87,11 @@ class WarframeMarketApi {
         }
     }
 
-    // ── Plat + ducats together, fetched in parallel ──────────────────────────────
-
     private val executor = Executors.newFixedThreadPool(4)
 
     fun fetchItemDetail(slug: String): ItemDetail {
         val cached = detailCache[slug]
-        if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
+        if (cached != null && System.currentTimeMillis() - cached.first < cacheTtlMs) {
             Log.d("WFOverlay", "Cache hit detail: $slug")
             return cached.second
         }
@@ -108,19 +103,15 @@ class WarframeMarketApi {
                 is ApiResult.Success -> r.price
                 else                 -> null
             }
-        } catch (e: Exception) { null }
+        } catch (_: Exception) { null }
 
-        val ducats = try { futureDucats.get() } catch (e: Exception) { null }
+        val ducats = try { futureDucats.get() } catch (_: Exception) { null }
 
         val detail = ItemDetail(platPrice48h = platPrice, ducats = ducats)
         detailCache[slug] = System.currentTimeMillis() to detail
         Log.d("WFOverlay", "Detail $slug → plat=${platPrice}p ducats=${ducats}d")
         return detail
     }
-
-    // ── Ducat value ──────────────────────────────────────────────────────────────
-    // v1/items/{slug} now returns 403 — migrated to v2.
-    // v2 response shape: { "data": { "ducats": 100, "slug": "...", ... }, "error": null }
 
     private fun fetchDucats(slug: String): Int? {
         return try {

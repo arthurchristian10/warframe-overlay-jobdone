@@ -3,10 +3,8 @@ package com.warframe.priceoverlay
 import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
-import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
-import android.os.Build
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -14,6 +12,7 @@ import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,7 +36,7 @@ class DebugPanelManager(private val service: Service) {
 
         val container = LinearLayout(service).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#EE0A0A1A"))
+            setBackgroundColor("#EE0A0A1A".toColorInt())
             setPadding(12, 10, 12, 10)
         }
 
@@ -47,9 +46,9 @@ class DebugPanelManager(private val service: Service) {
         }
 
         val tvTitle = TextView(service).apply {
-            text = "OCR DEBUG"
+            text = service.getString(R.string.ocr_debug)
             textSize = 10f
-            setTextColor(Color.parseColor("#FFAAAAFF"))
+            setTextColor("#FFAAAAFF".toColorInt())
             typeface = Typeface.MONOSPACE
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
@@ -57,7 +56,7 @@ class DebugPanelManager(private val service: Service) {
         val btnClose = TextView(service).apply {
             text = " ✕ "
             textSize = 11f
-            setTextColor(Color.parseColor("#FFFF6666"))
+            setTextColor("#FFFF6666".toColorInt())
             typeface = Typeface.MONOSPACE
             setOnClickListener { dismiss() }
         }
@@ -69,7 +68,7 @@ class DebugPanelManager(private val service: Service) {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1
             ).also { it.topMargin = 6; it.bottomMargin = 6 }
-            setBackgroundColor(Color.parseColor("#33FFFFFF"))
+            setBackgroundColor("#33FFFFFF".toColorInt())
         }
 
         val scroll = ScrollView(service).apply {
@@ -82,7 +81,7 @@ class DebugPanelManager(private val service: Service) {
         tvDebugOcr = TextView(service).apply {
             text = "Waiting for scan…"
             textSize = 9f
-            setTextColor(Color.parseColor("#FFCCCCDD"))
+            setTextColor("#FFCCCCDD".toColorInt())
             typeface = Typeface.MONOSPACE
             setPadding(0, 0, 0, 0)
         }
@@ -95,9 +94,7 @@ class DebugPanelManager(private val service: Service) {
         val wlp = WindowManager.LayoutParams(
             (300 * density).toInt(),
             WindowManager.LayoutParams.WRAP_CONTENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -125,7 +122,8 @@ class DebugPanelManager(private val service: Service) {
     }
 
     fun dismiss() {
-        debugPanelView?.let { try { windowManager.removeView(it) } catch (_: Exception) {} }
+        val view = debugPanelView ?: return
+        try { windowManager.removeView(view) } catch (_: Exception) {}
         debugPanelView = null
         tvDebugOcr = null
         isVisible = false
