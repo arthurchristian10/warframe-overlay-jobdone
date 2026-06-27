@@ -7,6 +7,7 @@ import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.os.Build
 import android.view.*
+import android.provider.Settings
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -44,13 +45,17 @@ class OverlayUIManager(
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setupOverlay() {
+        if (!Settings.canDrawOverlays(service)) {
+            return
+        }
+
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_SECURE,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -112,10 +117,13 @@ class OverlayUIManager(
             btnLookup.setColorFilter(color)
             tvLookupLabel.text = if (complete) service.getString(R.string.cracking_done) else service.getString(R.string.cracking_on)
             tvLookupLabel.setTextColor(color)
+            tvLastScan.visibility = View.VISIBLE
         } else {
             btnLookup.clearColorFilter()
             tvLookupLabel.text = service.getString(R.string.cracking_off)
             tvLookupLabel.setTextColor(color)
+            tvLastScan.visibility = View.GONE
+            tvLastScan.text = ""
         }
     }
 

@@ -110,25 +110,29 @@ class ScreenCapturer(
     fun captureFrame(cropRect: Rect?): Bitmap? {
         val reader = imageReader ?: return null
         return try {
-            reader.acquireLatestImage()?.use { image ->
-                val p = image.planes[0]
-                val rowPadding = p.rowStride - p.pixelStride * screenWidth
+            val image = reader.acquireLatestImage() ?: reader.acquireNextImage() ?: return null
+            image.use { img ->
+                val p = img.planes[0]
+                val imgWidth = img.width
+                val imgHeight = img.height
+                val rowPadding = p.rowStride - p.pixelStride * imgWidth
+                
                 val bmp = Bitmap.createBitmap(
-                    screenWidth + rowPadding / p.pixelStride, screenHeight, Bitmap.Config.ARGB_8888
+                    imgWidth + rowPadding / p.pixelStride, imgHeight, Bitmap.Config.ARGB_8888
                 )
                 bmp.copyPixelsFromBuffer(p.buffer)
                 
-                val full = Bitmap.createBitmap(bmp, 0, 0, screenWidth, screenHeight)
+                val full = Bitmap.createBitmap(bmp, 0, 0, imgWidth, imgHeight)
                 bmp.recycle()
 
                 if (cropRect != null && !cropRect.isEmpty && 
-                    cropRect.right <= screenWidth && cropRect.bottom <= screenHeight) {
+                    cropRect.right <= imgWidth && cropRect.bottom <= imgHeight) {
                     val cropped = Bitmap.createBitmap(
                         full,
-                        cropRect.left.coerceIn(0, screenWidth - 1),
-                        cropRect.top.coerceIn(0, screenHeight - 1),
-                        cropRect.width().coerceAtLeast(1).coerceAtMost(screenWidth - cropRect.left),
-                        cropRect.height().coerceAtLeast(1).coerceAtMost(screenHeight - cropRect.top)
+                        cropRect.left.coerceIn(0, imgWidth - 1),
+                        cropRect.top.coerceIn(0, imgHeight - 1),
+                        cropRect.width().coerceAtLeast(1).coerceAtMost(imgWidth - cropRect.left),
+                        cropRect.height().coerceAtLeast(1).coerceAtMost(imgHeight - cropRect.top)
                     )
                     full.recycle()
                     cropped

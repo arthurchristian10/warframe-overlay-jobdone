@@ -6,7 +6,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 sealed class ApiResult {
     data class Success(val price: Int)             : ApiResult()
@@ -25,24 +27,30 @@ class WarframeMarketApi {
     private val statsCache  = ConcurrentHashMap<String, Pair<Long, Int?>>()
     private val detailCache = ConcurrentHashMap<String, Pair<Long, ItemDetail>>()
     private val cacheTtlMs = 3 * 60 * 1000L
- // ── Rate-limit guard: max 3 requests per second ──────────────────────────
+    
     private var lastRequestTime = 0L
-    private val minRequestIntervalMs = 350L  // ~3 req/sec with margin
+    private val minRequestIntervalMs = 350L
 
-    @Synchronized
-    private fun throttle() {
-        val now = System.currentTimeMillis()
-        val wait = minRequestIntervalMs - (now - lastRequestTime)
-        if (wait > 0) Thread.sleep(wait)
-        lastRequestTime = System.currentTimeMillis()
+    private suspend fun throttle() {
+        val wait: Long
+        synchronized(this) {
+            val now = System.currentTimeMillis()
+            wait = minRequestIntervalMs - (now - lastRequestTime)
+            if (wait <= 0) {
+                lastRequestTime = now
+                return
+            }
+            lastRequestTime = now + wait
+        }
+        delay(wait)
     }
 
-    fun fetchStats(slug: String): ApiResult {
+    suspend fun fetchStats(slug: String): ApiResult = withContext(Dispatchers.IO) {
         val cached = statsCache[slug]
         if (cached != null && System.currentTimeMillis() - cached.first < cacheTtlMs) {
-            return if (cached.second != null) ApiResult.Success(cached.second!!) else ApiResult.NotFound
+            return@withContext if (cached.second != null) ApiResult.Success(cached.second!!) else ApiResult.NotFound
         }
-        return try {
+        return@withContext try {
             throttle()
             val conn = (URL("https://api.warframe.market/v1/items/$slug/statistics")
                 .openConnection() as HttpURLConnection).apply {
@@ -54,11 +62,11 @@ class WarframeMarketApi {
             }
             val code = conn.responseCode
             if (code == 429) {
-                val wait = conn.getHeaderField("Retry-After")?.toLongOrNull()?.times(1000L) ?: 2000L
+                val retryWait = conn.getHeaderField("Retry-After")?.toLongOrNull()?.times(1000L) ?: 2000L
                 conn.disconnect()
-                return ApiResult.RateLimited(wait)
+                return@withContext ApiResult.RateLimited(retryWait)
             }
-            if (code != 200) { conn.disconnect(); return ApiResult.Failure("HTTP $code") }
+            if (code != 200) { conn.disconnect(); return@withContext ApiResult.Failure("HTTP $code") }
             val body = conn.inputStream.bufferedReader().readText()
             conn.disconnect()
 
@@ -74,7 +82,7 @@ class WarframeMarketApi {
             }
             if (medians.isEmpty()) {
                 statsCache[slug] = System.currentTimeMillis() to null
-                return ApiResult.NotFound
+                return@withContext ApiResult.NotFound
             }
             medians.sort()
             val median = medians[medians.size / 2].toInt()
@@ -87,34 +95,53 @@ class WarframeMarketApi {
         }
     }
 
-    private val executor = Executors.newFixedThreadPool(4)
-
-    fun fetchItemDetail(slug: String): ItemDetail {
+    suspend fun fetchItemDetail(slug: String): ItemDetail? {
         val cached = detailCache[slug]
         if (cached != null && System.currentTimeMillis() - cached.first < cacheTtlMs) {
-            Log.d("WFOverlay", "Cache hit detail: $slug")
             return cached.second
         }
-        val futureStats:  Future<ApiResult> = executor.submit<ApiResult> { fetchStats(slug) }
-        val futureDucats: Future<Int?>      = executor.submit<Int?>      { fetchDucats(slug) }
-        
-        val platPrice = try {
-            when (val r = futureStats.get()) {
-                is ApiResult.Success -> r.price
-                else                 -> null
-            }
-        } catch (_: Exception) { null }
 
-        val ducats = try { futureDucats.get() } catch (_: Exception) { null }
+        var platPrice: Int? = null
+        var ducats: Int? = null
+        
+        // Retry loop for Stats
+        var statsAttempt = 0
+        while (statsAttempt < 3) {
+            when (val stats = fetchStats(slug)) {
+                is ApiResult.Success -> { platPrice = stats.price; break }
+                is ApiResult.NotFound -> break
+                is ApiResult.RateLimited -> delay(stats.retryAfterMs)
+                else -> delay(1000)
+            }
+            statsAttempt++
+        }
+        
+        // Retry loop for Ducats
+        var ducatAttempt = 0
+        while (ducatAttempt < 3) {
+            val dResult = fetchDucatsInternal(slug)
+            if (dResult is InternalResult.Success) { ducats = dResult.value; break }
+            if (dResult is InternalResult.NotFound) break
+            if (dResult is InternalResult.RateLimited) delay(dResult.wait) else delay(1000)
+            ducatAttempt++
+        }
+
+        if (platPrice == null && ducats == null) return null
 
         val detail = ItemDetail(platPrice48h = platPrice, ducats = ducats)
         detailCache[slug] = System.currentTimeMillis() to detail
-        Log.d("WFOverlay", "Detail $slug → plat=${platPrice}p ducats=${ducats}d")
         return detail
     }
 
-    private fun fetchDucats(slug: String): Int? {
-        return try {
+    private sealed class InternalResult {
+        data class Success(val value: Int?) : InternalResult()
+        object NotFound : InternalResult()
+        data class RateLimited(val wait: Long) : InternalResult()
+        object Error : InternalResult()
+    }
+
+    private suspend fun fetchDucatsInternal(slug: String): InternalResult = withContext(Dispatchers.IO) {
+        try {
             throttle()
             val conn = (URL("https://api.warframe.market/v2/items/$slug")
                 .openConnection() as HttpURLConnection).apply {
@@ -125,14 +152,16 @@ class WarframeMarketApi {
                 readTimeout    = 3000
             }
             val code = conn.responseCode
-            if (code != 200) { conn.disconnect(); return null }
+            if (code == 429) return@withContext InternalResult.RateLimited(2000L)
+            if (code != 200) { conn.disconnect(); return@withContext InternalResult.Error }
             val body = conn.inputStream.bufferedReader().readText()
             conn.disconnect()
-            val d = JSONObject(body).getJSONObject("data").optInt("ducats", 0)
-            if (d > 0) d else null
+            val data = JSONObject(body).optJSONObject("data") ?: return@withContext InternalResult.NotFound
+            val d = data.optInt("ducats", -1)
+            return@withContext if (d >= 0) InternalResult.Success(d) else InternalResult.Success(null)
         } catch (e: Exception) {
             Log.e("WFOverlay", "fetchDucats($slug): ${e.message}")
-            null
+            return@withContext InternalResult.Error
         }
     }
 }

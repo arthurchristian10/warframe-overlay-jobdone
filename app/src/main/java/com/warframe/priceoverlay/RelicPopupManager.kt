@@ -31,18 +31,14 @@ class RelicPopupManager(
     private val relicRewardCount = 4
 
     fun createRelicPopup(slug: String, name: String, bounds: Rect, screenWidth: Int, statusBarHeight: Int) {
-        if (relicPopups.containsKey(slug)) return
+        if (relicPopups.containsKey(slug)) {
+            val popupView = relicPopups[slug]!!
+            val params = popupView.layoutParams as WindowManager.LayoutParams
+            updateLayoutParams(params, bounds, screenWidth, statusBarHeight)
+            try { windowManager.updateViewLayout(popupView, params) } catch (_: Exception) {}
+            return
+        }
         
-        val density = service.resources.displayMetrics.density
-        val gapPx = (4 * density).roundToInt()
-        val colWidth = screenWidth / relicRewardCount
-
-        val centreX = (bounds.left + bounds.right) / 2
-        val slot = (centreX / colWidth).coerceIn(0, relicRewardCount - 1)
-        val popupWidthPx = (colWidth * 0.72f).toInt().coerceAtLeast(120)
-        val popupX = slot * colWidth + gapPx
-        val popupY = (bounds.bottom - statusBarHeight + gapPx).coerceAtLeast(0)
-
         val popupView = LayoutInflater.from(service).inflate(R.layout.item_popup_layout, FrameLayout(service), false)
         val tvName = popupView.findViewById<TextView>(R.id.popup_item_name)
         val tvPlat = popupView.findViewById<TextView>(R.id.popup_plat_price)
@@ -55,48 +51,66 @@ class RelicPopupManager(
         tvStatus.visibility = View.VISIBLE
 
         val wlp = WindowManager.LayoutParams(
-            popupWidthPx, WindowManager.LayoutParams.WRAP_CONTENT,
+            0,
+            WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_SECURE, 
+            PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = popupX
-            y = popupY
         }
+        
+        updateLayoutParams(wlp, bounds, screenWidth, statusBarHeight)
 
         windowManager.addView(popupView, wlp)
         relicPopups[slug] = popupView
         popupView.setOnClickListener { dismissRelicPopup(slug) }
 
         relicPopupJobs[slug] = CoroutineScope(Dispatchers.Main).launch {
-            val detail = withContext(Dispatchers.IO) {
-                try {
-                    apiSemaphore.withPermit { api.fetchItemDetail(slug) }
-                } catch (_: Exception) { null }
-            }
+            val detail = try {
+                apiSemaphore.withPermit { api.fetchItemDetail(slug) }
+            } catch (_: Exception) { null }
             
             if (!relicPopups.containsKey(slug)) return@launch
-            tvStatus.visibility = View.GONE
             
-            val plat = detail?.platPrice48h
-            val ducat = detail?.ducats
+            if (detail != null) {
+                tvStatus.visibility = View.GONE
+                val plat = detail.platPrice48h
+                val ducat = detail.ducats
 
-            tvPlat.text = if (plat != null) service.getString(R.string.plat_format, plat) else service.getString(R.string.no_data)
-            if (plat == null) tvPlat.setTextColor("#FFFF8080".toColorInt())
-            
-            tvDucat.text = if (ducat != null) service.getString(R.string.ducats_format, ducat) else "—"
-            if (ducat == null) tvDucat.setTextColor("#FF888899".toColorInt())
+                tvPlat.text = if (plat != null) service.getString(R.string.plat_format, plat) else service.getString(R.string.no_data)
+                if (plat == null) tvPlat.setTextColor("#FFFF8080".toColorInt())
+                
+                tvDucat.text = if (ducat != null) service.getString(R.string.ducats_format, ducat) else "—"
+                if (ducat == null) tvDucat.setTextColor("#FF888899".toColorInt())
 
-            if (plat != null && plat > 0 && ducat != null && ducat > 0) {
-                val ratio = ducat.toFloat() / plat.toFloat()
-                tvRatio.text = String.format(Locale.getDefault(), service.getString(R.string.ratio_format), ratio)
-                tvRatio.setTextColor("#FF80FF80".toColorInt().takeIf { ratio >= 1.0f } 
-                    ?: "#FFFFCC44".toColorInt().takeIf { ratio >= 0.5f } 
-                    ?: "#FFFF8080".toColorInt())
+                if (plat != null && plat > 0 && ducat != null && ducat > 0) {
+                    val ratio = ducat.toFloat() / plat.toFloat()
+                    tvRatio.text = String.format(Locale.getDefault(), service.getString(R.string.ratio_format), ratio)
+                    tvRatio.setTextColor("#FF80FF80".toColorInt().takeIf { ratio >= 1.0f } 
+                        ?: "#FFFFCC44".toColorInt().takeIf { ratio >= 0.5f } 
+                        ?: "#FFFF8080".toColorInt())
+                } else {
+                    tvRatio.text = "—"
+                }
             } else {
-                tvRatio.text = "—"
+                // If we absolutely couldn't get any data after retries
+                tvStatus.text = service.getString(R.string.no_data)
+                tvStatus.setTextColor("#FFFF8080".toColorInt())
             }
         }
+    }
+
+    private fun updateLayoutParams(params: WindowManager.LayoutParams, bounds: Rect, screenWidth: Int, statusBarHeight: Int) {
+        val density = service.resources.displayMetrics.density
+        val gapPx = (4 * density).roundToInt()
+        val colWidth = screenWidth / relicRewardCount
+        val popupWidthPx = bounds.width().coerceIn((colWidth * 0.6f).toInt(), (colWidth * 0.9f).toInt())
+        val centerX = (bounds.left + bounds.right) / 2
+        params.x = centerX - (popupWidthPx / 2)
+        params.y = bounds.bottom - statusBarHeight + gapPx
+        params.width = popupWidthPx
+        params.x = params.x.coerceIn(gapPx, screenWidth - popupWidthPx - gapPx)
     }
 
     fun dismissRelicPopup(slug: String) {

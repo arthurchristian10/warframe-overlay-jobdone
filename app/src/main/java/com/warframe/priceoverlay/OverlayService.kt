@@ -1,9 +1,7 @@
 package com.warframe.priceoverlay
 
-import android.app.Activity
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.app.*
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
@@ -13,6 +11,8 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.google.mlkit.vision.text.TextRecognition
@@ -56,12 +56,21 @@ class OverlayService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private var databaseLoaded = false
+
     override fun onCreate() {
         super.onCreate()
         prefs = getSharedPreferences("wf_overlay_prefs", MODE_PRIVATE)
         loadCropRect()
         
-        itemDatabase = ItemDatabase(this).apply { load() }
+        createNotificationChannel()
+        
+        itemDatabase = ItemDatabase(this)
+        itemDatabase.load {
+            databaseLoaded = true
+            Log.d("OverlayService", "Database ready to use")
+        }
+
         api = WarframeMarketApi()
         itemScanner = ItemScanner(itemDatabase, recognizer)
         relicManager = RelicPopupManager(this, api, apiSemaphore)
@@ -73,7 +82,7 @@ class OverlayService : Service() {
         
         uiManager = OverlayUIManager(
             service = this,
-            onToggleScan = { /* toggleScanning() // Main scan deactivated */ },
+            onToggleScan = { /* toggleScanning() */ },
             onToggleLookup = { toggleLookupMode() },
             onOpenCropSelector = { openCropSelector() },
             onToggleDebug = { debugManager.toggle() }
@@ -85,19 +94,30 @@ class OverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Start foreground IMMEDIATELY
+        startForegroundNotification()
+
         val resultCode = intent?.getIntExtra("EXTRA_RESULT_CODE", Int.MIN_VALUE) ?: Int.MIN_VALUE
         val resultData: Intent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             intent?.getParcelableExtra("EXTRA_RESULT_DATA", Intent::class.java)
         else @Suppress("DEPRECATION") intent?.getParcelableExtra("EXTRA_RESULT_DATA")
 
-        startForegroundNotification()
-
         if (resultCode == Activity.RESULT_OK && resultData != null && screenCapturer == null) {
             val mpm = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-            val mp = mpm.getMediaProjection(resultCode, resultData)
-            setupCapturer(mp)
+            try {
+                val mp = mpm.getMediaProjection(resultCode, resultData)
+                setupCapturer(mp)
+            } catch (e: SecurityException) {
+                Toast.makeText(this, "Screen capture permission failed", Toast.LENGTH_SHORT).show()
+            }
         }
         return START_NOT_STICKY
+    }
+
+    private fun resetCapturer() {
+        screenCapturer?.release()
+        screenCapturer = null
+        Toast.makeText(this, "Camera sync lost, please re-launch overlay", Toast.LENGTH_SHORT).show()
     }
 
     private fun setupCapturer(mp: MediaProjection) {
@@ -106,11 +126,16 @@ class OverlayService : Service() {
         }
     }
 
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = "OverlayServiceChannel"
+            val ch = NotificationChannel(channelId, "Warframe Overlay", NotificationManager.IMPORTANCE_LOW)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
+        }
+    }
+
     private fun startForegroundNotification() {
         val channelId = "OverlayServiceChannel"
-        val ch = NotificationChannel(channelId, "Warframe Overlay", NotificationManager.IMPORTANCE_LOW)
-        getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
-        
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle(getString(R.string.app_name))
             .setSmallIcon(R.drawable.ic_launcher)
@@ -122,6 +147,10 @@ class OverlayService : Service() {
     }
 
     private fun startScanning() {
+        if (!databaseLoaded) {
+            Toast.makeText(this, "Loading database, please wait...", Toast.LENGTH_SHORT).show()
+            return
+        }
         if (screenCapturer == null) {
             Toast.makeText(this, "Grant screen capture first", Toast.LENGTH_SHORT).show()
             return
@@ -149,6 +178,10 @@ class OverlayService : Service() {
     }
 
     private fun toggleLookupMode() {
+        if (!databaseLoaded) {
+            Toast.makeText(this, "Loading database, please wait...", Toast.LENGTH_SHORT).show()
+            return
+        }
         lookupModeActive = !lookupModeActive
         if (lookupModeActive) {
             uiManager.setLookupState(active = true)
@@ -179,31 +212,63 @@ class OverlayService : Service() {
         voteBank.clear()
     }
 
+    private var lastSuccessfulScanTime = 0L
+
     private suspend fun runSingleScan() {
         val capturer = screenCapturer ?: return
-        val bitmap = capturer.captureFrame(cropRect) ?: return
         
+        withContext(Dispatchers.Main) {
+            uiManager.updateLastScanTime("Scanning...")
+        }
+
+        val bitmap = capturer.captureFrame(cropRect)
+        if (bitmap == null) {
+            val now = System.currentTimeMillis()
+            if (lastSuccessfulScanTime != 0L && (now - lastSuccessfulScanTime) > 5000) {
+                // stuck for 5 seconds, attempt emergency reset
+                withContext(Dispatchers.Main) {
+                    uiManager.updateLastScanTime("Resetting...")
+                }
+                Log.w("OverlayService", "Scanner stuck, resetting capturer")
+                resetCapturer()
+                lastSuccessfulScanTime = now // prevent infinite reset loop
+            }
+            return
+        }
+        
+        lastSuccessfulScanTime = System.currentTimeMillis()
         scanCycle++
         val offset = Point(cropRect?.left ?: 0, cropRect?.top ?: 0)
         
-        val scannedItems = itemScanner.scanBitmap(
-            bitmap = bitmap,
-            cropOffset = offset,
-            lookupMode = lookupModeActive,
-            onDebugLog = { debugManager.postText(it) },
-        )
-        bitmap.recycle()
+        try {
+            // Add a timeout to OCR to prevent "infinite hang"
+            val scannedItems = withTimeoutOrNull(2500) {
+                itemScanner.scanBitmap(
+                    bitmap = bitmap,
+                    cropOffset = offset,
+                    lookupMode = lookupModeActive,
+                    onDebugLog = { debugManager.postText(it) },
+                )
+            } ?: emptyList()
+            
+            bitmap.recycle()
 
-        val seenThisCycle = scannedItems.asSequence().map { it.entry.slug }.toSet()
-        scannedItems.forEach { 
-            voteEntries[it.entry.slug] = it.entry
-            itemBounds[it.entry.slug] = it.bounds
-        }
+            val seenThisCycle = scannedItems.asSequence().map { it.entry.slug }.toSet()
+            scannedItems.forEach { 
+                voteEntries[it.entry.slug] = it.entry
+                itemBounds[it.entry.slug] = it.bounds
+            }
 
-        updateVotes(seenThisCycle)
+            updateVotes(seenThisCycle)
 
-        withContext(Dispatchers.Main) {
-            processResults()
+            withContext(Dispatchers.Main) {
+                processResults()
+                val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+                uiManager.updateLastScanTime(time)
+            }
+        } catch (e: Exception) {
+            bitmap.recycle()
+            Log.e("OverlayService", "Scan loop error", e)
         }
     }
 
@@ -262,6 +327,10 @@ class OverlayService : Service() {
     }
 
     private fun openCropSelector() {
+        if (!Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "Overlay permission not active", Toast.LENGTH_SHORT).show()
+            return
+        }
         cropManager.show(cropRect)
     }
 
