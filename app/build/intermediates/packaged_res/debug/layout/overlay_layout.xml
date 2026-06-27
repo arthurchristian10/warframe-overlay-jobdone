@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:gravity="start">
 
-    <!-- ── Header card: green scan button + blue cracking button ── -->
+    <!-- ── Header card ── -->
     <LinearLayout
         android:id="@+id/toggle_row"
         android:layout_width="wrap_content"
@@ -47,7 +47,7 @@
 
         </LinearLayout>
 
-        <!-- Row 2: cog (crop settings) + blue cracking button + label -->
+        <!-- Row 2: cog (crop) + blue cracking button + label -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -86,7 +86,34 @@
 
         </LinearLayout>
 
-        <!-- Row 3: last scan timestamp -->
+        <!-- Row 3: debug OCR toggle button -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="6dp">
+
+            <ImageView
+                android:id="@+id/btn_debug_toggle"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@android:drawable/ic_menu_info_details"
+                android:padding="3dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Toggle OCR debug panel" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OCR DEBUG"
+                android:textColor="#FF666688"
+                android:textSize="10sp"
+                android:fontFamily="monospace" />
+
+        </LinearLayout>
+
+        <!-- Row 4: last scan timestamp -->
         <TextView
             android:id="@+id/tv_last_scan"
             android:layout_width="wrap_content"
@@ -122,7 +149,7 @@
         android:background="#33FFFFFF"
         android:visibility="gone" />
 
-    <!-- Scrollable results — width adapts to longest item name (140–260dp) -->
+    <!-- Scrollable results -->
     <ScrollView
         android:id="@+id/scroll_results"
         android:layout_width="wrap_content"

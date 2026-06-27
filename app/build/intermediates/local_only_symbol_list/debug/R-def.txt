@@ -7,6 +7,7 @@ drawable circle_background
 drawable circle_background_blue
 drawable ic_launcher
 id btn_crop_settings
+id btn_debug_toggle
 id btn_lookup
 id btn_permission
 id btn_toggle

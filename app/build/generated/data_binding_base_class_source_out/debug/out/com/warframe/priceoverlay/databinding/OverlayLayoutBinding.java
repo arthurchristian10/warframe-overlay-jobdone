@@ -25,6 +25,9 @@ public final class OverlayLayoutBinding implements ViewBinding {
   public final ImageView btnCropSettings;
 
   @NonNull
+  public final ImageView btnDebugToggle;
+
+  @NonNull
   public final ImageView btnLookup;
 
   @NonNull
@@ -58,13 +61,15 @@ public final class OverlayLayoutBinding implements ViewBinding {
   public final TextView tvToggleLabel;
 
   private OverlayLayoutBinding(@NonNull LinearLayout rootView, @NonNull ImageView btnCropSettings,
-      @NonNull ImageView btnLookup, @NonNull ImageView btnToggle, @NonNull View divider,
-      @NonNull LinearLayout overlayRoot, @NonNull LinearLayout resultsContainer,
-      @NonNull ScrollView scrollResults, @NonNull LinearLayout toggleRow,
-      @NonNull TextView tvLastScan, @NonNull TextView tvLookupLabel,
-      @NonNull TextView tvMedianLabel, @NonNull TextView tvToggleLabel) {
+      @NonNull ImageView btnDebugToggle, @NonNull ImageView btnLookup, @NonNull ImageView btnToggle,
+      @NonNull View divider, @NonNull LinearLayout overlayRoot,
+      @NonNull LinearLayout resultsContainer, @NonNull ScrollView scrollResults,
+      @NonNull LinearLayout toggleRow, @NonNull TextView tvLastScan,
+      @NonNull TextView tvLookupLabel, @NonNull TextView tvMedianLabel,
+      @NonNull TextView tvToggleLabel) {
     this.rootView = rootView;
     this.btnCropSettings = btnCropSettings;
+    this.btnDebugToggle = btnDebugToggle;
     this.btnLookup = btnLookup;
     this.btnToggle = btnToggle;
     this.divider = divider;
@@ -108,6 +113,12 @@ public final class OverlayLayoutBinding implements ViewBinding {
       id = R.id.btn_crop_settings;
       ImageView btnCropSettings = ViewBindings.findChildViewById(rootView, id);
       if (btnCropSettings == null) {
+        break missingId;
+      }
+
+      id = R.id.btn_debug_toggle;
+      ImageView btnDebugToggle = ViewBindings.findChildViewById(rootView, id);
+      if (btnDebugToggle == null) {
         break missingId;
       }
 
@@ -173,9 +184,9 @@ public final class OverlayLayoutBinding implements ViewBinding {
         break missingId;
       }
 
-      return new OverlayLayoutBinding((LinearLayout) rootView, btnCropSettings, btnLookup,
-          btnToggle, divider, overlayRoot, resultsContainer, scrollResults, toggleRow, tvLastScan,
-          tvLookupLabel, tvMedianLabel, tvToggleLabel);
+      return new OverlayLayoutBinding((LinearLayout) rootView, btnCropSettings, btnDebugToggle,
+          btnLookup, btnToggle, divider, overlayRoot, resultsContainer, scrollResults, toggleRow,
+          tvLastScan, tvLookupLabel, tvMedianLabel, tvToggleLabel);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

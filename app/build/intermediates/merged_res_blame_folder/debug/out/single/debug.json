@@ -1,26 +1,30 @@
 [
     {
-        "merged": "com.warframe.priceoverlay.app-merged_res-4:/layout_item_popup_layout.xml.flat",
-        "source": "com.warframe.priceoverlay.app-main-6:/layout/item_popup_layout.xml"
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-merged_res-4:\\drawable_ic_launcher.xml.flat",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\drawable\\ic_launcher.xml"
     },
     {
-        "merged": "com.warframe.priceoverlay.app-merged_res-4:/drawable_ic_launcher.xml.flat",
-        "source": "com.warframe.priceoverlay.app-main-6:/drawable/ic_launcher.xml"
-    },
-    {
-        "merged": "com.warframe.priceoverlay.app-merged_res-4:/drawable_circle_background.xml.flat",
-        "source": "com.warframe.priceoverlay.app-main-6:/drawable/circle_background.xml"
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-merged_res-4:\\drawable_circle_background.xml.flat",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\drawable\\circle_background.xml"
     },
     {
         "merged": "com.warframe.priceoverlay.app-merged_res-4:/layout_overlay_layout.xml.flat",
         "source": "com.warframe.priceoverlay.app-main-6:/layout/overlay_layout.xml"
     },
     {
-        "merged": "com.warframe.priceoverlay.app-merged_res-4:/drawable_circle_background_blue.xml.flat",
-        "source": "com.warframe.priceoverlay.app-main-6:/drawable/circle_background_blue.xml"
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-merged_res-4:\\layout_overlay_layout.xml.flat",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\layout\\overlay_layout.xml"
     },
     {
-        "merged": "com.warframe.priceoverlay.app-merged_res-4:/layout_activity_main.xml.flat",
-        "source": "com.warframe.priceoverlay.app-main-6:/layout/activity_main.xml"
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-merged_res-4:\\drawable_circle_background_blue.xml.flat",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\drawable\\circle_background_blue.xml"
+    },
+    {
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-merged_res-4:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-merged_res-4:\\layout_item_popup_layout.xml.flat",
+        "source": "C:\\Users\\yasmi\\scoop\\apps\\gradle\\current\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\layout\\item_popup_layout.xml"
     }
 ]
