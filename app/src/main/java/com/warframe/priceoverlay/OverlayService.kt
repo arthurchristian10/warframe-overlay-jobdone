@@ -93,17 +93,13 @@ class OverlayService : Service() {
 
     private val SCAN_INTERVAL_MS     = 1000L
     private val LOOKUP_SCAN_INTERVAL = 800L
-    // Raised from 1 → 2: a match must appear in at least 2 consecutive scan cycles
-    // before showing up in the sidebar / creating a popup. Cuts false positives significantly.
-    private val CONFIRM_VOTES        = 2
+    private val CONFIRM_VOTES        = 1
     private val DECAY_PER_CYCLE      = 1
     private val MAX_RETRY_ATTEMPTS   = 3
     private val RELIC_REWARD_COUNT   = 4
     private val apiSemaphore         = Semaphore(3)
 
-    // How close (screen-px) two blocks' edges must be vertically to be merged,
-    // and what fraction of horizontal overlap is needed.
-    private val BLOCK_MERGE_GAP_PX   = 60
+    private val BLOCK_MERGE_GAP_PX    = 60
     private val BLOCK_MERGE_OVERLAP_F = 0.3f
 
     private val PREFS_NAME    = "wf_overlay_prefs"
@@ -112,7 +108,8 @@ class OverlayService : Service() {
     private val KEY_CROP_RIGHT  = "crop_right"
     private val KEY_CROP_BOTTOM = "crop_bottom"
 
-    private val voteBank    = mutableMapOf<String, Int>()
+    private data class VoteEntry(val votes: Int, val lastSeenCycle: Long)
+    private val voteBank    = mutableMapOf<String, VoteEntry>()
     private val voteEntries = mutableMapOf<String, ItemEntry>()
     private val itemBounds  = mutableMapOf<String, Rect>()
 
@@ -124,6 +121,9 @@ class OverlayService : Service() {
     private val relicPopups     = mutableMapOf<String, View>()
     private val relicPopupJobs  = mutableMapOf<String, Job>()
     private val relicPopupSlugs = mutableListOf<String>()
+
+    private var scanCycle = 0L
+    private val VOTE_GRACE_CYCLES = 3
 
     private lateinit var btnToggle: ImageView
     private lateinit var tvToggleLabel: TextView
@@ -137,8 +137,6 @@ class OverlayService : Service() {
     private lateinit var resultsContainer: LinearLayout
 
     override fun onBind(intent: Intent?): IBinder? = null
-
-    // ── Lifecycle ────────────────────────────────────────────────────────────────
 
     override fun onCreate() {
         super.onCreate()
@@ -187,8 +185,6 @@ class OverlayService : Service() {
         if (::overlayView.isInitialized) windowManager.removeView(overlayView)
     }
 
-    // ── Crop region ───────────────────────────────────────────────────────────────
-
     private fun loadCropRect() {
         val l = prefs.getInt(KEY_CROP_LEFT, -1)
         if (l >= 0) {
@@ -217,9 +213,13 @@ class OverlayService : Service() {
     private fun openCropSelector() {
         if (cropSelectorView != null) { dismissCropSelector(); return }
 
-        val m = resources.displayMetrics
-        val currentW = maxOf(m.widthPixels, m.heightPixels)
-        val currentH = minOf(m.widthPixels, m.heightPixels)
+        val currentW = screenWidth
+        val currentH = screenHeight
+
+        if (currentW == 0 || currentH == 0) {
+            Toast.makeText(this, "Screen capture not ready yet. Start scanning first.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val container = FrameLayout(this)
         val selector = CropSelectorView(this, cropRect, currentW, currentH)
@@ -267,8 +267,6 @@ class OverlayService : Service() {
         cropSelectorView?.let { try { windowManager.removeView(it) } catch (_: Exception) {} }
         cropSelectorView = null
     }
-
-    // ── Debug OCR panel ───────────────────────────────────────────────────────────
 
     private fun toggleDebugPanel() {
         if (debugPanelVisible) dismissDebugPanel() else showDebugPanel()
@@ -346,7 +344,6 @@ class OverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).also { it.gravity = Gravity.TOP or Gravity.END; it.x = 10; it.y = 120 }
 
-        // Make panel draggable
         var iX = 0; var iY = 0; var iTX = 0f; var iTY = 0f
         container.setOnTouchListener { _, e ->
             when (e.action) {
@@ -373,17 +370,14 @@ class OverlayService : Service() {
         if (::btnDebugToggle.isInitialized) btnDebugToggle.clearColorFilter()
     }
 
-    // Posts a debug string to the OCR panel (no-op if panel is hidden)
     private fun postDebugText(text: String) {
         if (!debugPanelVisible || !::tvDebugOcr.isInitialized) return
         CoroutineScope(Dispatchers.Main).launch { tvDebugOcr.text = text }
     }
 
-    // ── Relic popups ─────────────────────────────────────────────────────────────
-
     private fun showRelicPopupsForCurrentItems() {
         voteBank.keys
-            .filter { (voteBank[it] ?: 0) >= CONFIRM_VOTES && voteEntries.containsKey(it) }
+            .filter { (voteBank[it]?.votes ?: 0) >= CONFIRM_VOTES && voteEntries.containsKey(it) }
             .forEach { slug ->
                 val entry  = voteEntries[slug] ?: return@forEach
                 val bounds = itemBounds[slug]  ?: return@forEach
@@ -473,8 +467,6 @@ class OverlayService : Service() {
         relicPopupSlugs.clear()
     }
 
-    // ── Sidebar rows ─────────────────────────────────────────────────────────────
-
     private fun setRow(slug: String, name: String, state: RowState, price: String? = null) {
         rowState[slug] = state
         val (line2, colorHex) = when (state) {
@@ -535,8 +527,6 @@ class OverlayService : Service() {
             }
         }
     }
-
-    // ── Scan control ─────────────────────────────────────────────────────────────
 
     private fun toggleScanning() { if (scanningActive) stopScanning() else startScanning() }
 
@@ -611,8 +601,6 @@ class OverlayService : Service() {
         voteBank.clear(); voteEntries.clear(); itemBounds.clear()
     }
 
-    // ── Virtual display ───────────────────────────────────────────────────────────
-
     private fun setupVirtualDisplay() {
         val m = resources.displayMetrics
         val rawW = m.widthPixels; val rawH = m.heightPixels
@@ -640,8 +628,6 @@ class OverlayService : Service() {
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader?.surface, null, null
         )
     }
-
-    // ── Overlay setup ─────────────────────────────────────────────────────────────
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setupOverlay() {
@@ -688,18 +674,13 @@ class OverlayService : Service() {
         btnDebugToggle.setOnClickListener { toggleDebugPanel() }
     }
 
-    // ── Preprocessing — 3 variants tuned for Warframe UI text ────────────────────
-
-    // Scale factor: 2× for <1080p, 2× for 1080p, 1.5× for 1440p, 1× for 4K+
-    // (previously capped at 1.5× for everything ≥1080, which under-scaled 1080p)
     private fun scaleFactorFor(w: Int) = when {
         w < 1080 -> 2.0f
-        w < 1440 -> 2.0f   // 1080p now gets full 2× upscale
-        w < 2160 -> 1.5f   // 1440p
-        else     -> 1.0f   // 4K — already high enough res
+        w < 1440 -> 2.0f
+        w < 2160 -> 1.5f
+        else     -> 1.0f
     }
 
-    // A: desaturate → contrast ×2.2 — best for golden/coloured text
     private fun preprocessGrayContrast(bmp: Bitmap): Bitmap {
         val gray = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(gray).drawBitmap(bmp, 0f, 0f, Paint().apply {
@@ -714,7 +695,6 @@ class OverlayService : Service() {
         gray.recycle(); return out
     }
 
-    // B: softer binarize — threshold luma ~80 (was ~110), catches more thin/dark strokes
     private fun preprocessBinarized(bmp: Bitmap): Bitmap {
         val gray = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(gray).drawBitmap(bmp, 0f, 0f, Paint().apply {
@@ -723,14 +703,12 @@ class OverlayService : Service() {
         val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(out).drawBitmap(gray, 0f, 0f, Paint().apply {
             colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
-                // multiplier 5 + offset -400 → threshold ≈ luma 80 (was 10/-1100 → luma ~110)
                 5f,0f,0f,0f,-400f, 0f,5f,0f,0f,-400f, 0f,0f,5f,0f,-400f, 0f,0f,0f,1f,0f
             )))
         })
         gray.recycle(); return out
     }
 
-    // C: mild contrast ×1.5 preserving colour — catches antialiasing misses
     private fun preprocessSharpened(bmp: Bitmap): Bitmap {
         val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
         Canvas(out).drawBitmap(bmp, 0f, 0f, Paint().apply {
@@ -740,8 +718,6 @@ class OverlayService : Service() {
         })
         return out
     }
-
-    // ── Frame capture ─────────────────────────────────────────────────────────────
 
     private fun captureFrame(): Bitmap? {
         return try {
@@ -770,34 +746,16 @@ class OverlayService : Service() {
         } catch (e: Exception) { null }
     }
 
-    // ── OCR ───────────────────────────────────────────────────────────────────────
-
     private suspend fun runOcr(bitmap: Bitmap) = suspendCancellableCoroutine { cont ->
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
             .addOnSuccessListener { cont.resume(it) }
             .addOnFailureListener { cont.resumeWithException(it) }
     }
 
-    // ── Cross-block merging ───────────────────────────────────────────────────────
-    //
-    // ML Kit splits a single item name into two separate blocks when:
-    //   • there is a small gap between lines in the Warframe UI
-    //   • one word has different brightness / colour
-    //
-    // Strategy:
-    //   1. Convert each ML Kit block into a MergedBlock (text + screen-coord rect).
-    //   2. Sort by top-y so earlier blocks come first.
-    //   3. For each pair of blocks, if their vertical gap is ≤ BLOCK_MERGE_GAP_PX
-    //      AND their horizontal ranges overlap by ≥ BLOCK_MERGE_OVERLAP_F of the
-    //      smaller block's width, emit an extra synthetic candidate that concatenates
-    //      their texts.  The synthetic rect spans both blocks (union).
-    //   4. Feed both the originals AND the synthetics into matchWithBounds.
-    //
-    // This is additive — original blocks still get tried independently.
-
     private data class MergedBlock(
-        val text: String,       // full text of the block (lines joined with space)
-        val rect: Rect          // screen-coord bounding rect
+        val text: String,
+        val rect: Rect,
+        val sourceIndices: Set<Int>
     )
 
     private fun buildMergedBlocks(
@@ -807,7 +765,6 @@ class OverlayService : Service() {
         val cropOffsetX = cropRect?.left ?: 0
         val cropOffsetY = cropRect?.top  ?: 0
 
-        // Original blocks
         val originals = vt.textBlocks.mapNotNull { block ->
             val bb = block.boundingBox ?: return@mapNotNull null
             val lines = block.lines.map { it.text.trim() }.filter { it.isNotBlank() }
@@ -819,46 +776,64 @@ class OverlayService : Service() {
                     (bb.top    / sf).roundToInt() + cropOffsetY,
                     (bb.right  / sf).roundToInt() + cropOffsetX,
                     (bb.bottom / sf).roundToInt() + cropOffsetY
-                )
+                ),
+                sourceIndices = setOf(vt.textBlocks.indexOf(block))
             )
         }.sortedBy { it.rect.top }
 
+        if (originals.size < 2) return originals
+
         val result = originals.toMutableList()
 
-        // Try merging every pair of nearby blocks
-        for (i in originals.indices) {
-            for (j in i + 1 until originals.size) {
-                val a = originals[i]; val b = originals[j]
+        fun canMerge(a: MergedBlock, b: MergedBlock): Boolean {
+            val gap = b.rect.top - a.rect.bottom
+            if (gap > BLOCK_MERGE_GAP_PX) return false
 
-                // Vertical gap between the bottom of A and top of B
-                val gap = b.rect.top - a.rect.bottom
-                if (gap > BLOCK_MERGE_GAP_PX) continue   // too far apart vertically
+            val overlapLeft  = maxOf(a.rect.left,  b.rect.left)
+            val overlapRight = minOf(a.rect.right, b.rect.right)
+            val overlapW     = overlapRight - overlapLeft
+            val smallerW     = minOf(a.rect.width(), b.rect.width())
+            if (smallerW <= 0) return false
+            return overlapW.toFloat() / smallerW >= BLOCK_MERGE_OVERLAP_F
+        }
 
-                // Horizontal overlap check
-                val overlapLeft  = maxOf(a.rect.left,  b.rect.left)
-                val overlapRight = minOf(a.rect.right, b.rect.right)
-                val overlapW     = overlapRight - overlapLeft
-                val smallerW     = minOf(a.rect.width(), b.rect.width())
-                if (smallerW <= 0) continue
-                if (overlapW.toFloat() / smallerW < BLOCK_MERGE_OVERLAP_F) continue  // don't overlap enough
+        val MAX_MERGE_DEPTH = 4
 
-                // Build synthetic merged block
+        fun dfs(current: MergedBlock, startIdx: Int, depth: Int) {
+            if (depth >= MAX_MERGE_DEPTH) return
+            for (j in startIdx until originals.size) {
+                val candidate = originals[j]
+                if (candidate.sourceIndices.any { it in current.sourceIndices }) continue
+                if (!canMerge(current, candidate)) continue
+
                 val mergedRect = Rect(
-                    minOf(a.rect.left,   b.rect.left),
-                    minOf(a.rect.top,    b.rect.top),
-                    maxOf(a.rect.right,  b.rect.right),
-                    maxOf(a.rect.bottom, b.rect.bottom)
+                    minOf(current.rect.left,   candidate.rect.left),
+                    minOf(current.rect.top,    candidate.rect.top),
+                    maxOf(current.rect.right,  candidate.rect.right),
+                    maxOf(current.rect.bottom, candidate.rect.bottom)
                 )
-                result.add(MergedBlock("${a.text} ${b.text}", mergedRect))
+                val mergedBlock = MergedBlock(
+                    text = "${current.text} ${candidate.text}",
+                    rect = mergedRect,
+                    sourceIndices = current.sourceIndices + candidate.sourceIndices
+                )
+                result.add(mergedBlock)
 
-                Log.d("WFOverlay_Merge", "Merged: '${a.text}' + '${b.text}' gap=${gap}px overlapW=${overlapW}px")
+                Log.d("WFOverlay_Merge",
+                    "Merged depth=${depth+1}: '${current.text.take(30)}' + '${candidate.text.take(30)}' " +
+                    "→ '${mergedBlock.text.take(50)}'")
+
+                dfs(mergedBlock, j + 1, depth + 1)
             }
         }
 
-        return result
-    }
+        for (i in originals.indices) {
+            dfs(originals[i], i + 1, 1)
+        }
 
-    // ── Match blocks against item database ────────────────────────────────────────
+        val seen = mutableSetOf<Set<Int>>()
+        return result.filter { seen.add(it.sourceIndices) }
+    }
 
     private fun matchBlocks(
         blocks: List<MergedBlock>,
@@ -871,8 +846,6 @@ class OverlayService : Service() {
 
             var blockMatched = false
 
-            // Window-slide: try longer windows first (ws descending) so a 4-word
-            // match takes priority over a 2-word sub-match of the same span.
             outer@ for (ws in minOf(7, words.size) downTo 2) {
                 for (start in 0..words.size - ws) {
                     val query = words.subList(start, start + ws).joinToString(" ")
@@ -891,24 +864,20 @@ class OverlayService : Service() {
                                 "  → ${match.entry.name}"
                             )
                         }
-                        // Once we matched a long window, skip shorter sub-windows
-                        // that start within the same span to avoid duplicates
                         break@outer
                     }
                 }
             }
 
             if (!blockMatched && debugPanelVisible) {
-                // Show raw block text that yielded no match
                 val preview = block.text.take(50).let { if (block.text.length > 50) "$it…" else it }
                 debugLines.add("✗ \"$preview\"")
             }
         }
     }
 
-    // ── Main scan — 3 OCR passes in parallel ─────────────────────────────────────
-
     private suspend fun runSingleScan() {
+        scanCycle++
         val raw = captureFrame() ?: return
         val sf  = scaleFactorFor(raw.width)
         val scaled = Bitmap.createScaledBitmap(raw, (raw.width * sf).toInt(), (raw.height * sf).toInt(), true)
@@ -933,7 +902,6 @@ class OverlayService : Service() {
             matchBlocks(blocks, seenThisCycle, debugLines)
         }
 
-        // Post debug text (deduplicated, ordered)
         if (debugPanelVisible) {
             val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
             val header = "── $time ──────────────\n"
@@ -942,21 +910,39 @@ class OverlayService : Service() {
 
         val allTracked = (voteBank.keys + seenThisCycle).toSet()
         for (slug in allTracked) {
-            val prev = voteBank.getOrDefault(slug, 0)
-            val next = (prev + if (slug in seenThisCycle) 1 else -DECAY_PER_CYCLE).coerceIn(0, 6)
-            if (next == 0) voteBank.remove(slug) else voteBank[slug] = next
+            val prev = voteBank[slug]
+            val wasSeen = slug in seenThisCycle
+
+            if (wasSeen) {
+                val newVotes = (prev?.votes ?: 0) + 1
+                voteBank[slug] = VoteEntry(
+                    votes = newVotes.coerceAtMost(6),
+                    lastSeenCycle = scanCycle
+                )
+            } else {
+                val lastSeen = prev?.lastSeenCycle ?: scanCycle
+                val cyclesSinceSeen = scanCycle - lastSeen
+                if (cyclesSinceSeen > VOTE_GRACE_CYCLES) {
+                    val newVotes = (prev?.votes ?: 1) - DECAY_PER_CYCLE
+                    if (newVotes <= 0) {
+                        voteBank.remove(slug)
+                    } else {
+                        voteBank[slug] = VoteEntry(newVotes, lastSeen)
+                    }
+                }
+            }
         }
 
         withContext(Dispatchers.Main) {
             rowState.keys.filter { it !in voteBank }.forEach { removeRow(it) }
-            for ((slug, votes) in voteBank) {
-                if (votes < CONFIRM_VOTES) continue
-                val entry = voteEntries[slug] ?: continue
+            for ((slug, entry) in voteBank) {
+                if (entry.votes < CONFIRM_VOTES) continue
+                val itemEntry = voteEntries[slug] ?: continue
                 if (!rowState.containsKey(slug)) {
-                    setRow(slug, entry.name, RowState.LOADING_API); launchFetch(slug, entry)
+                    setRow(slug, itemEntry.name, RowState.LOADING_API); launchFetch(slug, itemEntry)
                 }
                 if (lookupModeActive && itemBounds.containsKey(slug) && !relicPopups.containsKey(slug))
-                    createRelicPopup(slug, entry.name, itemBounds[slug]!!)
+                    createRelicPopup(slug, itemEntry.name, itemBounds[slug]!!)
             }
             relicPopupSlugs.toList().filter { it !in voteBank }.forEach { dismissRelicPopup(it) }
             val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
