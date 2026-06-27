@@ -5,11 +5,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
+import com.google.android.material.card.MaterialCardView;
 import com.warframe.priceoverlay.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -17,7 +19,7 @@ import java.lang.String;
 
 public final class ActivityMainBinding implements ViewBinding {
   @NonNull
-  private final LinearLayout rootView;
+  private final ConstraintLayout rootView;
 
   @NonNull
   public final Button btnPermission;
@@ -25,16 +27,33 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final Button btnToggleOverlay;
 
-  private ActivityMainBinding(@NonNull LinearLayout rootView, @NonNull Button btnPermission,
-      @NonNull Button btnToggleOverlay) {
+  @NonNull
+  public final MaterialCardView cardControls;
+
+  @NonNull
+  public final TextView tvInstructions;
+
+  @NonNull
+  public final TextView tvSubtitle;
+
+  @NonNull
+  public final TextView tvTitle;
+
+  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnPermission,
+      @NonNull Button btnToggleOverlay, @NonNull MaterialCardView cardControls,
+      @NonNull TextView tvInstructions, @NonNull TextView tvSubtitle, @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnPermission = btnPermission;
     this.btnToggleOverlay = btnToggleOverlay;
+    this.cardControls = cardControls;
+    this.tvInstructions = tvInstructions;
+    this.tvSubtitle = tvSubtitle;
+    this.tvTitle = tvTitle;
   }
 
   @Override
   @NonNull
-  public LinearLayout getRoot() {
+  public ConstraintLayout getRoot() {
     return rootView;
   }
 
@@ -71,7 +90,32 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityMainBinding((LinearLayout) rootView, btnPermission, btnToggleOverlay);
+      id = R.id.card_controls;
+      MaterialCardView cardControls = ViewBindings.findChildViewById(rootView, id);
+      if (cardControls == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_instructions;
+      TextView tvInstructions = ViewBindings.findChildViewById(rootView, id);
+      if (tvInstructions == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_subtitle;
+      TextView tvSubtitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvSubtitle == null) {
+        break missingId;
+      }
+
+      id = R.id.tv_title;
+      TextView tvTitle = ViewBindings.findChildViewById(rootView, id);
+      if (tvTitle == null) {
+        break missingId;
+      }
+
+      return new ActivityMainBinding((ConstraintLayout) rootView, btnPermission, btnToggleOverlay,
+          cardControls, tvInstructions, tvSubtitle, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#1A1A2E</color>
-    <color name="primaryDark">#0F0F1E</color>
-    <color name="accent">#00E676</color>
+    <color name="primary">#0A0A1A</color>
+    <color name="primaryDark">#050510</color>
+    <color name="accent">#C5A566</color>
+
+    <color name="surface">#1C1C2E</color>
+    <color name="onSurface">#E0E0E0</color>
+    <color name="warframe_gold">#C5A566</color>
+    <color name="warframe_blue">#4488FF</color>
+    <color name="warframe_green">#00E676</color>
+    <color name="warframe_gray">#888899</color>
 </resources>
