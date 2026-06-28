@@ -25,7 +25,6 @@ class OverlayUIManager(
     private val windowManager = service.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private lateinit var overlayView: View
     
-    // UI Elements
     private lateinit var btnLookup: ImageView
     private lateinit var tvLookupLabel: TextView
     private lateinit var btnCropSettings: ImageView
@@ -49,9 +48,16 @@ class OverlayUIManager(
         tvLastScan = overlayView.findViewById(R.id.tv_last_scan)
         resultsContainer = overlayView.findViewById(R.id.results_container)
 
-        // Hide legacy scan button
         overlayView.findViewById<View>(R.id.btn_toggle).visibility = View.GONE
         overlayView.findViewById<View>(R.id.tv_toggle_label).visibility = View.GONE
+
+        val prefs = service.getSharedPreferences("wf_overlay_prefs", Context.MODE_PRIVATE)
+        val allowCaptures = prefs.getBoolean("allow_captures", false)
+        
+        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        if (!allowCaptures) {
+            flags = flags or WindowManager.LayoutParams.FLAG_SECURE
+        }
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -59,7 +65,7 @@ class OverlayUIManager(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_SECURE,
+            flags,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -68,24 +74,18 @@ class OverlayUIManager(
         }
 
         overlayView.setOnTouchListener(object : View.OnTouchListener {
-            private var lastX = 0
-            private var lastY = 0
-            private var startX = 0
-            private var startY = 0
-
+            private var lastX = 0; private var lastY = 0
+            private var startX = 0; private var startY = 0
             override fun onTouch(v: View, event: MotionEvent): Boolean {
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        lastX = event.rawX.toInt()
-                        lastY = event.rawY.toInt()
-                        startX = lastX
-                        startY = lastY
+                        lastX = event.rawX.toInt(); lastY = event.rawY.toInt()
+                        startX = lastX; startY = lastY
                     }
                     MotionEvent.ACTION_MOVE -> {
                         params.x += event.rawX.toInt() - lastX
                         params.y += event.rawY.toInt() - lastY
-                        lastX = event.rawX.toInt()
-                        lastY = event.rawY.toInt()
+                        lastX = event.rawX.toInt(); lastY = event.rawY.toInt()
                         windowManager.updateViewLayout(overlayView, params)
                     }
                     MotionEvent.ACTION_UP -> {
@@ -119,9 +119,7 @@ class OverlayUIManager(
         }
     }
 
-    fun updateLastScanTime(time: String) {
-        tvLastScan.text = time
-    }
+    fun updateLastScanTime(time: String) { tvLastScan.text = time }
 
     fun setRow(slug: String, name: String, price: String, colorHex: String) {
         val row = displayedRows.getOrPut(slug) {
@@ -137,22 +135,17 @@ class OverlayUIManager(
     }
 
     fun removeRow(slug: String) {
-        displayedRows.remove(slug)?.let { 
-            resultsContainer.removeView(it)
-        }
+        displayedRows.remove(slug)?.let { resultsContainer.removeView(it) }
     }
 
     fun ensureInsideScreen() {
         val size = Point()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val metrics = windowManager.currentWindowMetrics
-            size.x = metrics.bounds.width()
-            size.y = metrics.bounds.height()
+            size.x = metrics.bounds.width(); size.y = metrics.bounds.height()
         } else {
-            @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.getRealSize(size)
+            @Suppress("DEPRECATION") windowManager.defaultDisplay.getRealSize(size)
         }
-
         val params = overlayView.layoutParams as WindowManager.LayoutParams
         var changed = false
         if (params.x < 0) { params.x = 0; changed = true }

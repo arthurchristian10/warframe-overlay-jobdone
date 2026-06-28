@@ -5,12 +5,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
+import android.database.ContentObserver
 import android.graphics.Point
 import android.graphics.Rect
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -50,6 +55,8 @@ class OverlayService : Service() {
     private val voteEntries = mutableMapOf<String, ItemEntry>()
     private val itemBounds = mutableMapOf<String, Rect>()
 
+    private var screenshotObserver: ContentObserver? = null
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     private var databaseLoaded = false
@@ -86,6 +93,19 @@ class OverlayService : Service() {
         @Suppress("InternalInsetResource", "DiscouragedApi")
         val resId = resources.getIdentifier("status_bar_height", "dimen", "android")
         statusBarHeight = if (resId > 0) resources.getDimensionPixelSize(resId) else 0
+
+        setupScreenshotDetection()
+    }
+
+    private fun setupScreenshotDetection() {
+        screenshotObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean, uri: Uri?) {
+                if (!prefs.getBoolean("allow_captures", false)) {
+                    Toast.makeText(applicationContext, "Screenshot blocked! Enable 'Allow Captures' in gear settings to see prices in prints.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        contentResolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, screenshotObserver!!)
     }
 
     private var mediaProjection: MediaProjection? = null
@@ -167,8 +187,7 @@ class OverlayService : Service() {
         lookupLoopJob?.cancel()
         lookupLoopJob = serviceScope.launch {
             while (isActive) {
-                if (relicManager.
-                    activePopupCount() >= 4) {
+                if (relicManager.activePopupCount() >= 4) {
                     uiManager.setLookupState(active = true, complete = true)
                     break
                 }
@@ -311,6 +330,7 @@ class OverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+        screenshotObserver?.let { contentResolver.unregisterContentObserver(it) }
         stopLookupLoop()
         screenCapturer?.release()
         uiManager.release()

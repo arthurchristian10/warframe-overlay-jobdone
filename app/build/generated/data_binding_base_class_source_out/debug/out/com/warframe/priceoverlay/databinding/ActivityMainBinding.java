@@ -5,13 +5,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
-import com.google.android.material.card.MaterialCardView;
 import com.warframe.priceoverlay.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -19,41 +18,28 @@ import java.lang.String;
 
 public final class ActivityMainBinding implements ViewBinding {
   @NonNull
-  private final ConstraintLayout rootView;
+  private final RelativeLayout rootView;
 
   @NonNull
   public final Button btnPermission;
 
   @NonNull
+  public final ImageButton btnSettings;
+
+  @NonNull
   public final Button btnToggleOverlay;
 
-  @NonNull
-  public final MaterialCardView cardControls;
-
-  @NonNull
-  public final TextView tvInstructions;
-
-  @NonNull
-  public final TextView tvSubtitle;
-
-  @NonNull
-  public final TextView tvTitle;
-
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull Button btnPermission,
-      @NonNull Button btnToggleOverlay, @NonNull MaterialCardView cardControls,
-      @NonNull TextView tvInstructions, @NonNull TextView tvSubtitle, @NonNull TextView tvTitle) {
+  private ActivityMainBinding(@NonNull RelativeLayout rootView, @NonNull Button btnPermission,
+      @NonNull ImageButton btnSettings, @NonNull Button btnToggleOverlay) {
     this.rootView = rootView;
     this.btnPermission = btnPermission;
+    this.btnSettings = btnSettings;
     this.btnToggleOverlay = btnToggleOverlay;
-    this.cardControls = cardControls;
-    this.tvInstructions = tvInstructions;
-    this.tvSubtitle = tvSubtitle;
-    this.tvTitle = tvTitle;
   }
 
   @Override
   @NonNull
-  public ConstraintLayout getRoot() {
+  public RelativeLayout getRoot() {
     return rootView;
   }
 
@@ -84,38 +70,20 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btn_settings;
+      ImageButton btnSettings = ViewBindings.findChildViewById(rootView, id);
+      if (btnSettings == null) {
+        break missingId;
+      }
+
       id = R.id.btn_toggle_overlay;
       Button btnToggleOverlay = ViewBindings.findChildViewById(rootView, id);
       if (btnToggleOverlay == null) {
         break missingId;
       }
 
-      id = R.id.card_controls;
-      MaterialCardView cardControls = ViewBindings.findChildViewById(rootView, id);
-      if (cardControls == null) {
-        break missingId;
-      }
-
-      id = R.id.tv_instructions;
-      TextView tvInstructions = ViewBindings.findChildViewById(rootView, id);
-      if (tvInstructions == null) {
-        break missingId;
-      }
-
-      id = R.id.tv_subtitle;
-      TextView tvSubtitle = ViewBindings.findChildViewById(rootView, id);
-      if (tvSubtitle == null) {
-        break missingId;
-      }
-
-      id = R.id.tv_title;
-      TextView tvTitle = ViewBindings.findChildViewById(rootView, id);
-      if (tvTitle == null) {
-        break missingId;
-      }
-
-      return new ActivityMainBinding((ConstraintLayout) rootView, btnPermission, btnToggleOverlay,
-          cardControls, tvInstructions, tvSubtitle, tvTitle);
+      return new ActivityMainBinding((RelativeLayout) rootView, btnPermission, btnSettings,
+          btnToggleOverlay);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -1,14 +1,22 @@
 [
     {
-        "merged": "com.warframe.priceoverlay.app-mergeDebugResources-3:/layout/activity_main.xml",
-        "source": "com.warframe.priceoverlay.app-main-6:/layout/activity_main.xml"
+        "merged": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-mergeDebugResources-3:\\layout\\item_popup_layout.xml",
+        "source": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\layout\\item_popup_layout.xml"
     },
     {
-        "merged": "com.warframe.priceoverlay.app-mergeDebugResources-3:/layout/overlay_layout.xml",
-        "source": "com.warframe.priceoverlay.app-main-6:/layout/overlay_layout.xml"
+        "merged": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-mergeDebugResources-3:\\layout\\settings_dialog.xml",
+        "source": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\layout\\settings_dialog.xml"
     },
     {
-        "merged": "com.warframe.priceoverlay.app-mergeDebugResources-3:/layout/item_popup_layout.xml",
-        "source": "com.warframe.priceoverlay.app-main-6:/layout/item_popup_layout.xml"
+        "merged": "com.warframe.priceoverlay.app-mergeDebugResources-3:/layout/activity_settings.xml",
+        "source": "com.warframe.priceoverlay.app-main-6:/layout/activity_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-mergeDebugResources-3:\\layout\\overlay_layout.xml",
+        "source": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\layout\\overlay_layout.xml"
+    },
+    {
+        "merged": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-mergeDebugResources-3:\\layout\\activity_main.xml",
+        "source": "C:\\Users\\yasmi\\scoop\\persist\\gradle\\.gradle\\daemon\\8.14.5\\com.warframe.priceoverlay.app-main-6:\\layout\\activity_main.xml"
     }
 ]

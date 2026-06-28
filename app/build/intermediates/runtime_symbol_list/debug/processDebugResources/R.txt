@@ -4028,17 +4028,18 @@ int id bounce 0x7f080067
 int id bounceBoth 0x7f080068
 int id bounceEnd 0x7f080069
 int id bounceStart 0x7f08006a
+int id btn_back 0x7f08023a
 int id btn_crop_settings 0x7f08006b
 int id btn_debug_toggle 0x7f08006c
 int id btn_lookup 0x7f08006d
 int id btn_permission 0x7f08006e
+int id btn_settings 0x7f080238
 int id btn_toggle 0x7f08006f
 int id btn_toggle_overlay 0x7f080070
 int id buttonPanel 0x7f080071
 int id cache_measures 0x7f080072
 int id callMeasure 0x7f080073
 int id cancel_button 0x7f080074
-int id card_controls 0x7f080075
 int id carryVelocity 0x7f080076
 int id center 0x7f080077
 int id centerCrop 0x7f080078
@@ -4088,6 +4089,7 @@ int id design_menu_item_action_area_stub 0x7f0800a3
 int id design_menu_item_text 0x7f0800a4
 int id design_navigation_view 0x7f0800a5
 int id dialog_button 0x7f0800a6
+int id dialog_switch_capture 0x7f080239
 int id dimensions 0x7f0800a7
 int id direct 0x7f0800a8
 int id disableHome 0x7f0800a9
@@ -4402,6 +4404,7 @@ int id stretch 0x7f0801dd
 int id submenuarrow 0x7f0801de
 int id submit_area 0x7f0801df
 int id supportScrollUp 0x7f0801e0
+int id switch_capture 0x7f08023b
 int id tabMode 0x7f0801e1
 int id tag_accessibility_actions 0x7f0801e2
 int id tag_accessibility_clickable_spans 0x7f0801e3
@@ -4455,12 +4458,9 @@ int id transition_position 0x7f080212
 int id transition_scene_layoutid_cache 0x7f080213
 int id transition_transform 0x7f080214
 int id triangle 0x7f080215
-int id tv_instructions 0x7f080216
 int id tv_last_scan 0x7f080217
 int id tv_lookup_label 0x7f080218
 int id tv_median_label 0x7f080219
-int id tv_subtitle 0x7f08021a
-int id tv_title 0x7f08021b
 int id tv_toggle_label 0x7f08021c
 int id unchecked 0x7f08021d
 int id uniform 0x7f08021e
@@ -4609,6 +4609,7 @@ int layout abc_search_view 0x7f0b0019
 int layout abc_select_dialog_material 0x7f0b001a
 int layout abc_tooltip 0x7f0b001b
 int layout activity_main 0x7f0b001c
+int layout activity_settings 0x7f0b0075
 int layout custom_dialog 0x7f0b001d
 int layout design_bottom_navigation_item 0x7f0b001e
 int layout design_bottom_sheet_dialog 0x7f0b001f
@@ -4695,6 +4696,7 @@ int layout overlay_layout 0x7f0b006f
 int layout select_dialog_item_material 0x7f0b0070
 int layout select_dialog_multichoice_material 0x7f0b0071
 int layout select_dialog_singlechoice_material 0x7f0b0072
+int layout settings_dialog 0x7f0b0074
 int layout support_simple_spinner_dropdown_item 0x7f0b0073
 int plurals mtrl_badge_content_description 0x7f0d0000
 int string abc_action_bar_home_description 0x7f0e0000
@@ -4750,6 +4752,7 @@ int string character_counter_content_description 0x7f0e0031
 int string character_counter_overflowed_content_description 0x7f0e0032
 int string character_counter_pattern 0x7f0e0033
 int string clear_text_end_icon_content_description 0x7f0e0034
+int string close 0x7f0e00f1
 int string common_google_play_services_enable_button 0x7f0e0035
 int string common_google_play_services_enable_text 0x7f0e0036
 int string common_google_play_services_enable_title 0x7f0e0037
@@ -4922,6 +4925,7 @@ int string path_password_eye 0x7f0e00dd
 int string path_password_eye_mask_strike_through 0x7f0e00de
 int string path_password_eye_mask_visible 0x7f0e00df
 int string path_password_strike_through 0x7f0e00e0
+int string permissions 0x7f0e00f2
 int string plat_format 0x7f0e00e1
 int string ratio_format 0x7f0e00e2
 int string row_format 0x7f0e00e3
@@ -4932,6 +4936,7 @@ int string searchbar_scrolling_view_behavior 0x7f0e00e7
 int string searching 0x7f0e00e8
 int string searchview_clear_text_content_description 0x7f0e00e9
 int string searchview_navigation_content_description 0x7f0e00ea
+int string settings 0x7f0e00f3
 int string side_sheet_accessibility_pane_title 0x7f0e00eb
 int string side_sheet_behavior 0x7f0e00ec
 int string start_overlay 0x7f0e00ed

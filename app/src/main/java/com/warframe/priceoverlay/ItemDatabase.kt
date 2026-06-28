@@ -16,7 +16,7 @@ data class ItemEntry(
     @SerializedName("n") val name: String,
     @SerializedName("u") val slug: String,
     @SerializedName("d") var ducats: Int? = null,
-    @SerializedName("t") var lastUpdate: Long = 0 // Timestamp of last ducat check
+    @SerializedName("t") var lastUpdate: Long = 0
 )
 
 data class MatchResult(
@@ -48,7 +48,6 @@ class ItemDatabase(private val context: Context) {
                         dbFile.outputStream().use { output -> input.copyTo(output) }
                     }
                 }
-
                 dbFile.inputStream().use { inputStream ->
                     val loaded: List<ItemEntry> = Gson().fromJson(InputStreamReader(inputStream), object : TypeToken<List<ItemEntry>>() {}.type)
                     buildIndex(loaded)
@@ -88,26 +87,17 @@ class ItemDatabase(private val context: Context) {
                     setRequestProperty("Accept", "application/json")
                     connectTimeout = 10000
                 }
-                
                 if (conn.responseCode == 200) {
                     val body = conn.inputStream.bufferedReader().readText()
                     val itemsArray = JSONObject(body).getJSONObject("payload").getJSONArray("items")
-                    
-                    // Preserve existing ducats AND their timestamps
                     val existingData = index.associate { it.entry.slug to (it.entry.ducats to it.entry.lastUpdate) }
-                    
                     val newList = mutableListOf<ItemEntry>()
                     for (i in 0 until itemsArray.length()) {
-                        val slug = objName(itemsArray.getJSONObject(i))
+                        val obj = itemsArray.getJSONObject(i)
+                        val slug = obj.getString("url_name")
                         val old = existingData[slug]
-                        newList.add(ItemEntry(
-                            name = itemsArray.getJSONObject(i).getString("item_name"),
-                            slug = slug,
-                            ducats = old?.first,
-                            lastUpdate = old?.second ?: 0
-                        ))
+                        newList.add(ItemEntry(obj.getString("item_name"), slug, old?.first, old?.second ?: 0))
                     }
-                    
                     if (newList.size > 2000) {
                         saveToDisk(newList)
                         buildIndex(newList)
@@ -120,45 +110,61 @@ class ItemDatabase(private val context: Context) {
             }
         }.start()
     }
-    
-    private fun objName(obj: JSONObject) = obj.getString("url_name")
 
     fun saveLearnedDucats(slug: String, value: Int) {
         val item = index.find { it.entry.slug == slug }?.entry ?: return
         item.ducats = value
-        item.lastUpdate = System.currentTimeMillis() // Set check timestamp
-        
-        Thread {
-            synchronized(this) { saveToDisk(index.map { it.entry }) }
-        }.start()
+        item.lastUpdate = System.currentTimeMillis()
+        Thread { synchronized(this) { saveToDisk(index.map { it.entry }) } }.start()
     }
 
     private fun saveToDisk(items: List<ItemEntry>) {
-        try {
-            val json = Gson().toJson(items)
-            File(context.filesDir, DB_FILE_NAME).writeText(json)
-        } catch (e: Exception) {
-            Log.e("ItemDatabase", "Save error", e)
-        }
+        try { File(context.filesDir, DB_FILE_NAME).writeText(Gson().toJson(items)) } catch (e: Exception) {}
     }
 
     fun searchItemDetailed(query: String): MatchResult? {
         if (query.isBlank() || index.isEmpty()) return null
-        val normQuery = query.trim().lowercase()
-        val queryWords = normQuery.split(Regex("\\s+")).filter { it.isNotBlank() }
+        
+        val fixedQuery = query.trim().lowercase()
+        val queryWords = fixedQuery.split(Regex("\\s+")).filter { it.isNotBlank() }
         if (queryWords.isEmpty()) return null
 
-        index.find { it.nameLower == normQuery }?.let { return MatchResult(it.entry, 1.0f, "EXACT") }
-        index.find { it.nameGlued == normQuery.replace(" ", "") }?.let { return MatchResult(it.entry, 0.98f, "GLUED") }
+        // 1. EXACT & GLUED
+        index.find { it.nameLower == fixedQuery }?.let { return MatchResult(it.entry, 1.0f, "EXACT") }
+        index.find { it.nameGlued == fixedQuery.replace(" ", "") }?.let { return MatchResult(it.entry, 0.98f, "GLUED") }
 
-        val candidates = queryWords.flatMap { (wordMap[it] ?: emptySet()) + (wordMap[normalizeOcr(it)] ?: emptySet()) }.toSet()
+        // 2. CANDIDATE PRUNING WITH TYPO TOLERANCE (Handles "Pime", "Wokong", etc.)
+        val candidates = queryWords.flatMap { qw ->
+            val direct = (wordMap[qw] ?: emptySet<Int>()) + (wordMap[normalizeOcr(qw)] ?: emptySet<Int>())
+            if (direct.isNotEmpty()) direct else {
+                // If not found, look for similar words in the index (Fuzzy candidates)
+                wordMap.keys.filter { dbw -> damerauLevenshtein(qw, dbw) <= 1 }
+                    .flatMap { wordMap[it] ?: emptySet<Int>() }
+            }
+        }.toSet()
+
+        if (candidates.isEmpty()) return null
+
+        // 3. WORD COVERAGE
         val coverage = candidates.map { index[it] }.filter { item ->
-            queryWords.all { qw -> item.nameWords.contains(qw) || item.nameGlued.contains(qw) || item.nameWordsNorm.contains(normalizeOcr(qw)) }
+            queryWords.all { qw -> 
+                item.nameWords.any { it.contains(qw) || qw.contains(it) || damerauLevenshtein(qw, it) <= 1 }
+            }
         }
 
         if (coverage.size == 1) return MatchResult(coverage[0].entry, 0.95f, "COVERAGE")
-        if (coverage.size > 1) return null
+        if (coverage.size > 1) {
+            val baseNames = coverage.map { it.nameWords.first() }.toSet()
+            if (baseNames.size == 1) {
+                val best = coverage.minByOrNull { Math.abs(it.nameWords.size - queryWords.size) }
+                if (best != null) return MatchResult(best.entry, 0.90f, "PARTIAL")
+            }
+            // Preference for Prime if multiple found (like Wukong vs Wukong Prime)
+            coverage.find { it.nameLower.contains("prime") }?.let { return MatchResult(it.entry, 0.85f, "PRIME_PRIORITY") }
+            return null
+        }
 
+        // 4. DEEP FUZZY (Final fallback)
         val queryNorm = queryWords.map { normalizeOcr(it) }
         var bestF: IndexedItem? = null; var bestS = 0f
         for (idx in candidates) {
@@ -166,25 +172,27 @@ class ItemDatabase(private val context: Context) {
             for (qw in queryNorm) {
                 var bWS = 0f
                 for (iw in item.nameWordsNorm) {
-                    if (Math.abs(qw.length - iw.length) > 1) continue
+                    val maxLen = maxOf(qw.length, iw.length).toFloat()
+                    if (Math.abs(qw.length - iw.length) > 2) continue
                     val d = damerauLevenshtein(qw, iw)
-                    var s = 1.0f - (d.toFloat() / maxOf(qw.length, iw.length).toFloat())
-                    if (iw.startsWith(qw.take(3))) s += 0.1f
+                    var s = 1.0f - (d.toFloat() / maxLen)
+                    if (iw.startsWith(qw.take(2)) || qw.startsWith(iw.take(2))) s += 0.05f
                     if (s > bWS) bWS = s
                 }
-                if (bWS > 0.85f) { tS += bWS; m++ }
+                if (bWS > 0.60f) { tS += bWS; m++ }
             }
-            if (m >= queryNorm.size && m > 0) {
-                val score = (tS / m) * (m.toFloat() / item.nameWordsNorm.size)
+            if (m >= (queryNorm.size * 0.6)) {
+                val score = (tS / queryNorm.size) * (m.toFloat() / item.nameWordsNorm.size)
                 if (score > bestS) { bestS = score; bestF = item }
             }
         }
-        return if (bestF != null && bestS >= 0.75f) MatchResult(bestF.entry, bestS, "FUZZY") else null
+        return if (bestF != null && bestS >= 0.50f) MatchResult(bestF.entry, bestS, "FUZZY") else null
     }
 
     private fun normalizeOcr(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD)
         .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "").lowercase()
         .replace('0','o').replace('1','l').replace('|','l').replace('5','s').replace('3','e')
+        .replace('v','u').replace('q','g')
 
     private fun damerauLevenshtein(a: String, b: String): Int {
         val dp = Array(a.length + 1) { IntArray(b.length + 1) }

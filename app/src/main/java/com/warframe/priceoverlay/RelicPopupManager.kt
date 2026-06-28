@@ -40,29 +40,37 @@ class RelicPopupManager(
             relicPopups[slug] = view
             startDataFetch(slug, name, view)
         }
-
-        // Use statusBarHeight to correctly offset from the top of the screen
-        updateAllPopupPositions(screenWidth, statusBarHeight)
+        updateAllPopupPositions(screenWidth)
     }
 
-    private fun createInitialParams() = WindowManager.LayoutParams(
-        WindowManager.LayoutParams.WRAP_CONTENT,
-        WindowManager.LayoutParams.WRAP_CONTENT,
-        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_SECURE, 
-        PixelFormat.TRANSLUCENT
-    ).apply {
-        gravity = Gravity.TOP or Gravity.START
+    private fun createInitialParams(): WindowManager.LayoutParams {
+        val prefs = service.getSharedPreferences("wf_overlay_prefs", Context.MODE_PRIVATE)
+        val allowCaptures = prefs.getBoolean("allow_captures", false)
+        
+        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or 
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        
+        if (!allowCaptures) {
+            flags = flags or WindowManager.LayoutParams.FLAG_SECURE
+        }
+
+        return WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            flags,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+        }
     }
 
-    private fun updateAllPopupPositions(screenWidth: Int, statusBarHeight: Int) {
+    private fun updateAllPopupPositions(screenWidth: Int) {
         val density = service.resources.displayMetrics.density
-        val verticalGap = (15 * density).roundToInt()
-        val horizontalPadding = (5 * density).roundToInt()
-
+        val verticalGap = (10 * density).roundToInt()
+        val horizontalPadding = (6 * density).roundToInt()
         val globalMaxBottom = activeBounds.values.maxOfOrNull { it.bottom } ?: 0
-        val targetY = globalMaxBottom - statusBarHeight + verticalGap
-
+        val targetY = globalMaxBottom + verticalGap
         val sortedSlugs = activeBounds.keys.sortedBy { activeBounds[it]?.left ?: 0 }
         val colWidth = screenWidth / 4
         
@@ -70,11 +78,9 @@ class RelicPopupManager(
             val view = relicPopups[slug] ?: continue
             val bounds = activeBounds[slug] ?: continue
             val params = view.layoutParams as WindowManager.LayoutParams
-
             val popupWidth = bounds.width().coerceIn((colWidth * 0.7f).toInt(), (colWidth * 0.95f).toInt())
             val centerX = (bounds.left + bounds.right) / 2
             var targetX = centerX - (popupWidth / 2)
-
             val prevIdx = sortedSlugs.indexOf(slug) - 1
             if (prevIdx >= 0) {
                 val prevSlug = sortedSlugs[prevIdx]
@@ -85,11 +91,9 @@ class RelicPopupManager(
                     if (targetX < minX) targetX = minX
                 }
             }
-
             params.x = targetX.coerceIn(horizontalPadding, screenWidth - popupWidth - horizontalPadding)
             params.y = targetY
             params.width = popupWidth
-            
             try { windowManager.updateViewLayout(view, params) } catch (_: Exception) {}
         }
     }

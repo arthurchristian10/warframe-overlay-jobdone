@@ -70,13 +70,22 @@ class WarframeMarketApi {
         return try {
             val hours48 = JSONObject(body).getJSONObject("payload").getJSONObject("statistics_closed").getJSONArray("48hours")
             
-            // Getting the latest entry from the 48h stats
             if (hours48.length() > 0) {
-                val latestEntry = hours48.getJSONObject(hours48.length() - 1)
+                // Focus on Rank 0 (unranked) items as they are the standard for 48h median/avg
+                val unrankedEntries = mutableListOf<JSONObject>()
+                for (i in 0 until hours48.length()) {
+                    val entry = hours48.getJSONObject(i)
+                    if (entry.optInt("mod_rank", 0) == 0) {
+                        unrankedEntries.add(entry)
+                    }
+                }
+
+                val target = if (unrankedEntries.isNotEmpty()) unrankedEntries.last() else hours48.getJSONObject(hours48.length() - 1)
                 
-                // VWAP is usually the 'avg_price' in WFM API statistics
-                val vwapPrice = latestEntry.optDouble("avg_price", -1.0)
-                val finalPrice = if (vwapPrice > 0) vwapPrice.toInt() else latestEntry.optInt("median", 0)
+                // Return VWAP (avg_price) if available, otherwise fallback to Median
+                val vwap = target.optDouble("avg_price", -1.0)
+                val median = target.optInt("median", 0)
+                val finalPrice = if (vwap > 0) vwap.toInt() else median
 
                 if (finalPrice > 0) {
                     statsCache[slug] = System.currentTimeMillis() to finalPrice
@@ -86,7 +95,6 @@ class WarframeMarketApi {
                     ApiResult.NotFound
                 }
             } else {
-                statsCache[slug] = System.currentTimeMillis() to null
                 ApiResult.NotFound
             }
         } catch (e: Exception) {

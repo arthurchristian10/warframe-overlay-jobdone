@@ -40,4 +40,7 @@
     <!-- Crop Selector -->
     <string name="confirm_crop_region">Confirm crop region</string>
     <string name="crop_saved">Crop region saved (%1$d×%2$d)</string>
+    <string name="permissions">Permissions</string>
+    <string name="settings">Settings</string>
+    <string name="close">Close</string>
 </resources>

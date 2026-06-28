@@ -1,94 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/primary"
+    android:background="#0A0A1A"
     android:padding="24dp">
 
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/artframe"
-        android:textColor="@color/warframe_gold"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:fontFamily="monospace"
-        android:letterSpacing="0.2"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="48dp" />
+    <!-- Settings Button (Gear) in top right -->
+    <ImageButton
+        android:id="@+id/btn_settings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_preferences"
+        android:contentDescription="Settings"
+        app:tint="#FFCC44" />
 
-    <TextView
-        android:id="@+id/tv_subtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/warframe_market_overlay"
-        android:textColor="@color/warframe_gray"
-        android:textSize="14sp"
-        android:fontFamily="monospace"
-        app:layout_constraintTop_toBottomOf="@id/tv_title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card_controls"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/surface"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
-        app:strokeColor="@color/warframe_gold"
-        app:strokeWidth="1dp"
-        app:layout_constraintTop_toBottomOf="@id/tv_subtitle"
-        app:layout_constraintBottom_toTopOf="@id/tv_instructions"
-        android:layout_marginTop="64dp">
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
-        <LinearLayout
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="#FFCC44"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="48dp" />
+
+        <Button
+            android:id="@+id/btn_permission"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="24dp">
+            android:text="@string/permissions"
+            android:backgroundTint="#222244"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="16dp" />
 
-            <Button
-                android:id="@+id/btn_permission"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:text="@string/grant_permission"
-                android:textAllCaps="true"
-                android:fontFamily="monospace"
-                android:textStyle="bold"
-                android:textColor="@color/primary"
-                android:backgroundTint="@color/warframe_blue"
-                android:layout_marginBottom="16dp" />
+        <Button
+            android:id="@+id/btn_toggle_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="@string/start_overlay"
+            android:backgroundTint="#4488FF"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/btn_toggle_overlay"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:text="@string/launch_overlay"
-                android:textAllCaps="true"
-                android:fontFamily="monospace"
-                android:textStyle="bold"
-                android:textColor="@color/primary"
-                android:backgroundTint="@color/warframe_gold" />
+    </LinearLayout>
 
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-        android:id="@+id/tv_instructions"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/instructions"
-        android:textColor="@color/warframe_gray"
-        android:textSize="12sp"
-        android:lineSpacingExtra="4dp"
-        android:fontFamily="monospace"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="32dp" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

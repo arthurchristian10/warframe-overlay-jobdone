@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" />
 
     <permission
         android:name="com.warframe.priceoverlay.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -44,6 +45,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.warframe.priceoverlay.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ArtFrame" />
 
         <service
             android:name="com.warframe.priceoverlay.OverlayService"
